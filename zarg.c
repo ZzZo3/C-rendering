@@ -17,10 +17,6 @@ void termLine() {
   printf("\n");
 }
 
-char boolForm(bool b) {
-  if (b) { return "1";} else { return "O";}
-}
-
 /*-----------------> DRAW <-----------------*/
 
 int yDim = 64, xDim = 210;
@@ -160,8 +156,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   bool shallowXZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->x - aTemp->x)) <= 1.0 || alikeZ ) && !alikeX;
   bool shallowYZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->y - aTemp->y)) <= 1.0 || alikeZ ) && !alikeY;
   struct Point3 a, b;
-  char cond[9] = {boolForm(sortX), boolForm(sortY), boolForm(sortZ), boolForm(alikeX), boolForm(alikeY), boolForm(alikeZ), boolForm(shallowXY), boolForm(shallowXZ), boolForm(shallowYZ)};
-  printf("  sort: %d %d %d  alike: %d %d %d  shallow: %d %d %d", cond[0],cond[1],cond[2],cond[3],cond[4],cond[5],cond[6],cond[7],cond[8]);
+  printf("  sort: %i %i %i  alike: %i %i %i  shallow: %i %i %i", sortX, sortY, sortZ, alikeX, alikeY, alikeZ, shallowXY, shallowXZ, shallowYZ);
   if ( (sortX & sortY) || (sortX & (shallowXY || alikeY)) || (sortY & (!shallowXY || alikeX)) )
   { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;}
   // draw
