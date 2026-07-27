@@ -308,6 +308,5 @@ void testShapes() {
 int main() {
   startup();
   testShapes();
-  printf(">Sin Wave\n");
   render();
 };
