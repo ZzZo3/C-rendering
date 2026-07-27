@@ -253,17 +253,17 @@ int main() {
   drawLine(&pA,&pQ,'.');
   drawFuncX(s_in,'.');
    
-  struct Point3 p3A = {40,20,0};
-  struct Point3 p3B = {60,30,9};
-  struct Point3 p3C = {40,10,3};
-  struct Point3 p3D = {25,25,6};
+  struct Point3 p3A = {40,20,0}; //mid
+  struct Point3 p3B = {60,30,9}; //right
+  struct Point3 p3C = {40,10,3}; //top
+  struct Point3 p3D = {25,25,6}; //left
 
-  draw3Line(&p3A,&p3B);
-  draw3Line(&p3A,&p3C);
-  draw3Line(&p3A,&p3D);
-  draw3Line(&p3B,&p3C);
-  draw3Line(&p3B,&p3D);
-  draw3Line(&p3C,&p3D);
+  draw3Line(&p3A,&p3B); //succeeds
+  draw3Line(&p3A,&p3C); //fails
+  draw3Line(&p3A,&p3D); //succeeds
+  draw3Line(&p3B,&p3C); //succeeds
+  draw3Line(&p3B,&p3D); //succeeds
+  draw3Line(&p3C,&p3D); //succeeds
 
   render();
 };
