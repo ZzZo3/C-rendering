@@ -156,7 +156,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   bool shallowXZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->x - aTemp->x)) <= 1.0 || alikeZ ) && !alikeX;
   bool shallowYZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->y - aTemp->y)) <= 1.0 || alikeZ ) && !alikeY;
   struct Point3 a, b;
-  printf("  sortX,Y,Z %i %i %i  alikeX,Y,Z %i %i %i  shallowXY,XZ,YZ %i %i %i", sortX, sortY, sortZ, alikeX, alikeY, alikeZ, shallowXY, shallowXZ, shallowYZ);
+  printf("  sort:xyz %i %i %i  alike:xyz %i %i %i  shallow:xy,xz,yz %i %i %i", sortX, sortY, sortZ, alikeX, alikeY, alikeZ, shallowXY, shallowXZ, shallowYZ);
   if (alikeX) {
   } else if (alikeY) {
   } else if (alikeZ) {
