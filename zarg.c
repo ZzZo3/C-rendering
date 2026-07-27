@@ -120,6 +120,7 @@ void draw3Point(struct Point3 *p) { SPACIAL[p->z][p->y][p->x] = 1;}
 
 void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   printf(" printing 3D Line...");
+  bool drew = false;
   /*struct Point3 a, b;
   if (aTemp->x > bTemp->x) {
     a.x = bTemp->x;
@@ -153,11 +154,9 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   bool alikeX = aTemp->x == bTemp->x, alikeY = aTemp->y == bTemp->y, alikeZ = aTemp->z == bTemp->z;
   bool shallowXY = ( abs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || alikeY ) && !alikeX;
   bool shallowXZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->x - aTemp->x)) <= 1.0 || alikeZ ) && !alikeX;
-  // drew nothing check
-  bool drew = false;
-  // a<->b
+  bool shallowYZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->y - aTemp->y)) <= 1.0 || alikeZ ) && !alikeY;
   struct Point3 a, b;
-  printf("  sortX %i  alikeX %i  alikeY %i  alikeZ %i  shallowXY %i  shallowXZ %i", sortX, alikeX, alikeY, alikeZ, shallowXY, shallowXZ);
+  printf("  sortX,Y,Z %i,%i,%i  alikeX,Y,Z %i,%i,%i  shallowXY,XZ,YZ %i,%i,%i", sortX, sortY, sortZ, alikeX, alikeY, alikeZ, shallowXY, shallowXZ, shallowYZ);
   if (alikeX) {
   } else if (alikeY) {
   } else if (alikeZ) {
