@@ -224,7 +224,7 @@ void render() {
 
 void testShapes() {
 // TEST SHAPE 2D
-
+  printf(">Test Shape 2D\n");
   struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
@@ -242,42 +242,21 @@ void testShapes() {
   struct Point pO = {115,15};
   struct Point pP = {115,45};
   struct Point pQ = {85,45};
-
-  drawLine(&pA,&pB,'.');
-  drawLine(&pA,&pC,'.');
-  drawLine(&pA,&pD,'.');
-  drawLine(&pA,&pE,'.');
-  drawLine(&pA,&pF,'.');
-  drawLine(&pA,&pG,'.');
-  drawLine(&pA,&pH,'.');
-  drawLine(&pA,&pI,'.');
-  drawLine(&pA,&pJ,'.');
-  drawLine(&pA,&pK,'.');
-  drawLine(&pA,&pL,'.');
-  drawLine(&pA,&pM,'.');
-  drawLine(&pA,&pN,'.');
-  drawLine(&pA,&pO,'.');
-  drawLine(&pA,&pP,'.');
-  drawLine(&pA,&pQ,'.');
-
-  //drawFuncX(s_in,'`');
-  
+  drawLine(&pA,&pB,'.');drawLine(&pA,&pC,'.');drawLine(&pA,&pD,'.');drawLine(&pA,&pE,'.');
+  drawLine(&pA,&pF,'.');drawLine(&pA,&pG,'.');drawLine(&pA,&pH,'.');drawLine(&pA,&pI,'.');
+  drawLine(&pA,&pJ,'.');drawLine(&pA,&pK,'.');drawLine(&pA,&pL,'.');drawLine(&pA,&pM,'.');
+  drawLine(&pA,&pN,'.');drawLine(&pA,&pO,'.');drawLine(&pA,&pP,'.');drawLine(&pA,&pQ,'.');
 // PYRAMID 
-
+  printf(">Pyramid\n");
   struct Point3 p3At = {40,20,0}; //mid
   struct Point3 p3Bt = {60,30,9}; //right
   struct Point3 p3Ct = {40,10,3}; //top
   struct Point3 p3Dt = {25,25,6}; //left
-
-  draw3Line(&p3At,&p3Bt); //succeeds
-  draw3Line(&p3At,&p3Ct); //fails
-  draw3Line(&p3At,&p3Dt); //succeeds
-  draw3Line(&p3Bt,&p3Ct); //succeeds
-  draw3Line(&p3Bt,&p3Dt); //succeeds
-  draw3Line(&p3Ct,&p3Dt); //succeeds
-
+  draw3Line(&p3At,&p3Bt);draw3Line(&p3At,&p3Ct);
+  draw3Line(&p3At,&p3Dt);draw3Line(&p3Bt,&p3Ct);
+  draw3Line(&p3Bt,&p3Dt);draw3Line(&p3Ct,&p3Dt);
 // TEST SHAPE 3D a
-
+  printf(">Test Shape 3D a\n");
   struct Point3 p3A = {145,30,9};
   struct Point3 p3B = {145,10,0};
   struct Point3 p3C = {165,20,0};
@@ -295,26 +274,12 @@ void testShapes() {
   struct Point3 p3O = {160,15,0};
   struct Point3 p3P = {160,45,0};
   struct Point3 p3Q = {130,45,0};
-
-  draw3Line(&p3A,&p3B);
-  draw3Line(&p3A,&p3C);
-  draw3Line(&p3A,&p3D);
-  draw3Line(&p3A,&p3E);
-  draw3Line(&p3A,&p3F);
-  draw3Line(&p3A,&p3G);
-  draw3Line(&p3A,&p3H);
-  draw3Line(&p3A,&p3I);
-  draw3Line(&p3A,&p3J);
-  draw3Line(&p3A,&p3K);
-  draw3Line(&p3A,&p3L);
-  draw3Line(&p3A,&p3M);
-  draw3Line(&p3A,&p3N);
-  draw3Line(&p3A,&p3O);
-  draw3Line(&p3A,&p3P);
-  draw3Line(&p3A,&p3Q);
-
+  draw3Line(&p3A,&p3B);draw3Line(&p3A,&p3C);draw3Line(&p3A,&p3D);draw3Line(&p3A,&p3E);
+  draw3Line(&p3A,&p3F);draw3Line(&p3A,&p3G);draw3Line(&p3A,&p3H);draw3Line(&p3A,&p3I);
+  draw3Line(&p3A,&p3J);draw3Line(&p3A,&p3K);draw3Line(&p3A,&p3L);draw3Line(&p3A,&p3M);
+  draw3Line(&p3A,&p3N);draw3Line(&p3A,&p3O);draw3Line(&p3A,&p3P);draw3Line(&p3A,&p3Q);
 // TEST SHAPE 3D b
-
+  printf(">Test Shape 3D b\n");
   struct Point3 p3Ab = {190,30,0};
   struct Point3 p3Bb = {190,10,9};
   struct Point3 p3Cb = {210,20,9};
@@ -332,27 +297,16 @@ void testShapes() {
   struct Point3 p3Ob = {205,15,9};
   struct Point3 p3Pb = {205,45,9};
   struct Point3 p3Qb = {175,45,9};
-
-  draw3Line(&p3Ab,&p3Bb);
-  draw3Line(&p3Ab,&p3Cb);
-  draw3Line(&p3Ab,&p3Db);
-  draw3Line(&p3Ab,&p3Eb);
-  draw3Line(&p3Ab,&p3Fb);
-  draw3Line(&p3Ab,&p3Gb);
-  draw3Line(&p3Ab,&p3Hb);
-  draw3Line(&p3Ab,&p3Ib);
-  draw3Line(&p3Ab,&p3Jb);
-  draw3Line(&p3Ab,&p3Kb);
-  draw3Line(&p3Ab,&p3Lb);
-  draw3Line(&p3Ab,&p3Mb);
-  draw3Line(&p3Ab,&p3Nb);
-  draw3Line(&p3Ab,&p3Ob);
-  draw3Line(&p3Ab,&p3Pb);
-  draw3Line(&p3Ab,&p3Qb);
+  draw3Line(&p3Ab,&p3Bb);draw3Line(&p3Ab,&p3Cb);draw3Line(&p3Ab,&p3Db);draw3Line(&p3Ab,&p3Eb);
+  draw3Line(&p3Ab,&p3Fb);draw3Line(&p3Ab,&p3Gb);draw3Line(&p3Ab,&p3Hb);draw3Line(&p3Ab,&p3Ib);
+  draw3Line(&p3Ab,&p3Jb);draw3Line(&p3Ab,&p3Kb);draw3Line(&p3Ab,&p3Lb);draw3Line(&p3Ab,&p3Mb);
+  draw3Line(&p3Ab,&p3Nb);draw3Line(&p3Ab,&p3Ob);draw3Line(&p3Ab,&p3Pb);draw3Line(&p3Ab,&p3Qb);
 }
 
 int main() {
   startup();
   testShapes();
+  printf(">Sin Wave\n");
+  drawFuncX(s_in,'.');
   render();
 };
