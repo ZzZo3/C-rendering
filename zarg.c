@@ -262,7 +262,7 @@ int main() {
   struct Point3 p3D = {25,25,6}; //left
 
   draw3Line(&p3A,&p3B); //succeeds
-  draw3Line(&p3A,&p3C); //fails
+  draw3Line(&p3C,&p3A); //fails
   draw3Line(&p3A,&p3D); //succeeds
   draw3Line(&p3B,&p3C); //succeeds
   draw3Line(&p3B,&p3D); //succeeds
