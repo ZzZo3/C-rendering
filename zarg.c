@@ -288,7 +288,7 @@ int main() {
   draw3Line(&p3Bt,&p3Dt); //succeeds
   draw3Line(&p3Ct,&p3Dt); //succeeds
 
-// TEST SHAPE 3D shallowXZ
+// TEST SHAPE 3D a
 
   struct Point3 p3A = {145,30,9};
   struct Point3 p3B = {145,10,0};
@@ -325,7 +325,7 @@ int main() {
   draw3Line(&p3A,&p3P);
   draw3Line(&p3A,&p3Q);
 
-// TEST SHAPE 3D !shallowXZ
+// TEST SHAPE 3D b
 
   struct Point3 p3Ab = {190,30,0};
   struct Point3 p3Bb = {190,10,9};
