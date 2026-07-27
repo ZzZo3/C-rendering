@@ -158,7 +158,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   if ( (sortX & sortY) || (sortX & (shallowXY || alikeY)) || (sortY & (!shallowXY || alikeX)) )
   { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;}
   // draw
-  bool drew = flase;
+  bool drew = false;
   if (shallowXY & shallowXZ) {
     for (int xi=a.x; xi<=b.x; xi++) {
       float yM = ((float)b.y-a.y)/(b.x-a.x);
@@ -167,7 +167,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
       float z = zM * (xi - a.x) + a.z;
       struct Point3 pTemp = {xi,y+0.5,z+0.5};
       draw3Point(&pTemp);
-      failed=false;
+      drew = true;
     }
   }/* else {
     for (int yi=a.y; yi<=b.y; yi++) {
