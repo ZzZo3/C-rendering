@@ -271,7 +271,7 @@ int main() {
 
 // TEST SHAPE 3D a
 
-  struct Point3 p3A = {100,30,9};
+  struct Point3 p3A = {160,30,9};
   struct Point3 p3B = {100,10,0};
   struct Point3 p3C = {120,20,0};
   struct Point3 p3D = {120,30,0};
