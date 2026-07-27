@@ -272,7 +272,7 @@ int main() {
   drawLine(&pA,&pP,'.');
   drawLine(&pA,&pQ,'.');
 
-  drawFuncX(s_in,'`');
+  //drawFuncX(s_in,'`');
   
 // PYRAMID 
 
