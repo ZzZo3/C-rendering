@@ -301,12 +301,13 @@ void testShapes() {
   draw3Line(&p3Ab,&p3Fb);draw3Line(&p3Ab,&p3Gb);draw3Line(&p3Ab,&p3Hb);draw3Line(&p3Ab,&p3Ib);
   draw3Line(&p3Ab,&p3Jb);draw3Line(&p3Ab,&p3Kb);draw3Line(&p3Ab,&p3Lb);draw3Line(&p3Ab,&p3Mb);
   draw3Line(&p3Ab,&p3Nb);draw3Line(&p3Ab,&p3Ob);draw3Line(&p3Ab,&p3Pb);draw3Line(&p3Ab,&p3Qb);
+// SIN(X)
+  drawFuncX(s_in,'.');
 }
 
 int main() {
   startup();
   testShapes();
   printf(">Sin Wave\n");
-  drawFuncX(s_in,'.');
   render();
 };
