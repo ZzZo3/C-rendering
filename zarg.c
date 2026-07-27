@@ -234,8 +234,6 @@ int main() {
   struct Point pO = {115,15};
   struct Point pP = {115,45};
   struct Point pQ = {85,45};
-  struct Point pR = {150,25};
-  struct Point pS = {150,75};
 
   drawLine(&pA,&pB,'.');
   drawLine(&pA,&pC,'.');
@@ -254,19 +252,36 @@ int main() {
   drawLine(&pA,&pP,'.');
   drawLine(&pA,&pQ,'.');
   drawFuncX(s_in,'.');
-  drawLine(&pR,&pS,'X');
    
-  struct Point3 p3A = {40,20,0}; //mid
-  struct Point3 p3B = {60,30,9}; //right
-  struct Point3 p3C = {40,10,3}; //top
-  struct Point3 p3D = {25,25,6}; //left
+  struct Point3 p3At = {40,20,0}; //mid
+  struct Point3 p3Bt = {60,30,9}; //right
+  struct Point3 p3Ct = {40,10,3}; //top
+  struct Point3 p3Dt = {25,25,6}; //left
 
-  draw3Line(&p3A,&p3B); //succeeds
-  draw3Line(&p3A,&p3C); //fails
-  draw3Line(&p3A,&p3D); //succeeds
-  draw3Line(&p3B,&p3C); //succeeds
-  draw3Line(&p3B,&p3D); //succeeds
-  draw3Line(&p3C,&p3D); //succeeds
+  struct Point p3A = {100,30,0};
+  struct Point p3B = {100,10,0};
+  struct Point p3C = {120,20,0};
+  struct Point p3D = {120,30,0};
+  struct Point p3E = {120,40,0};
+  struct Point p3F = {100,50,0};
+  struct Point p3G = {80,40,0};
+  struct Point p3H = {80,30,0};
+  struct Point p3I = {80,20,0};
+  struct Point p3J = {90,10,0};
+  struct Point p3K = {110,10,0};
+  struct Point p3L = {110,50,0};
+  struct Point p3M = {90,50,0};
+  struct Point p3N = {85,15,0};
+  struct Point p3O = {115,15,0};
+  struct Point p3P = {115,45,0};
+  struct Point p3Q = {85,45,0};
+
+  draw3Line(&p3At,&p3Bt); //succeeds
+  draw3Line(&p3At,&p3Ct); //fails
+  draw3Line(&p3At,&p3Dt); //succeeds
+  draw3Line(&p3Bt,&p3Ct); //succeeds
+  draw3Line(&p3Bt,&p3Dt); //succeeds
+  draw3Line(&p3Ct,&p3Dt); //succeeds
 
   render();
 };
