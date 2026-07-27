@@ -164,8 +164,8 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
       for (int xi=a.x; xi<=b.x; xi++) {
         float yM = ((float)b.y-a.y)/(b.x-a.x);
         float zM = ((float)b.z-a.z)/(b.x-a.x);
-        float y = yM * (xi - a.x) + a.y;
-        float z = zM * (xi - a.x) + a.z;
+        float y = yM * (xi - a.x) + a.y; // y in terms of x
+        float z = zM * (xi - a.x) + a.z; // z in terms of x
         struct Point3 pTemp = {xi,y+0.5,z+0.5};
         draw3Point(&pTemp);
         drew = true;
@@ -173,9 +173,9 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
     } else {
       for (int yi=a.y; yi<=b.y; yi++) {
         float xM = ((float)b.x-a.x)/(b.y-a.y);
-        float zM = ((float)b.z-a.z)/(b.x-a.x);
-        float x = xM * (yi-a.y) + a.x;
-        float z = zM * (xi - a.x) + a.z;
+        float zM = ((float)b.z-a.z)/(b.y-a.y);
+        float x = xM * (yi - a.y) + a.x; // x in terms of y
+        float z = zM * (yi - a.y) + a.z; // z in terms of y
         struct Point3 pTemp = {x+0.5,yi,z+0.5};
         draw3Point(&pTemp);
         drew = true;
