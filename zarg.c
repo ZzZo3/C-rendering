@@ -18,7 +18,7 @@ void termLine() {
 }
 
 char boolForm(bool b) {
-  if (b) { return '1';} else { return 'O';}
+  if (b) { return "1";} else { return "O";}
 }
 
 /*-----------------> DRAW <-----------------*/
