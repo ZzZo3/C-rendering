@@ -290,7 +290,7 @@ int main() {
 
 // TEST SHAPE 3D shallowXZ
 
-  struct Point3 p3A = {160,30,9};
+  struct Point3 p3A = {140,30,9};
   struct Point3 p3B = {160,10,0};
   struct Point3 p3C = {180,20,0};
   struct Point3 p3D = {180,30,0};
