@@ -289,22 +289,22 @@ int main() {
   struct Point p3P = {115,45,0};
   struct Point p3Q = {85,45,0};
 
-  drawLine(&p3A,&p3B);
-  drawLine(&p3A,&p3C);
-  drawLine(&p3A,&p3D);
-  drawLine(&p3A,&p3E);
-  drawLine(&p3A,&p3F);
-  drawLine(&p3A,&p3G);
-  drawLine(&p3A,&p3H);
-  drawLine(&p3A,&p3I);
-  drawLine(&p3A,&p3J);
-  drawLine(&p3A,&p3K);
-  drawLine(&p3A,&p3L);
-  drawLine(&p3A,&p3M);
-  drawLine(&p3A,&p3N);
-  drawLine(&p3A,&p3O);
-  drawLine(&p3A,&p3P);
-  drawLine(&p3A,&p3Q);
+  draw3Line(&p3A,&p3B);
+  draw3Line(&p3A,&p3C);
+  draw3Line(&p3A,&p3D);
+  draw3Line(&p3A,&p3E);
+  draw3Line(&p3A,&p3F);
+  draw3Line(&p3A,&p3G);
+  draw3Line(&p3A,&p3H);
+  draw3Line(&p3A,&p3I);
+  draw3Line(&p3A,&p3J);
+  draw3Line(&p3A,&p3K);
+  draw3Line(&p3A,&p3L);
+  draw3Line(&p3A,&p3M);
+  draw3Line(&p3A,&p3N);
+  draw3Line(&p3A,&p3O);
+  draw3Line(&p3A,&p3P);
+  draw3Line(&p3A,&p3Q);
 
   render();
 };
