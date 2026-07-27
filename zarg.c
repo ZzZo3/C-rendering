@@ -234,6 +234,8 @@ int main() {
   struct Point pO = {115,15};
   struct Point pP = {115,45};
   struct Point pQ = {85,45};
+  struct Point pR = {150,25};
+  struct Point pS = {150,75};
 
   drawLine(&pA,&pB,'.');
   drawLine(&pA,&pC,'.');
@@ -252,6 +254,7 @@ int main() {
   drawLine(&pA,&pP,'.');
   drawLine(&pA,&pQ,'.');
   drawFuncX(s_in,'.');
+  drawLine(&pR,&pS,'X');
    
   struct Point3 p3A = {40,20,0}; //mid
   struct Point3 p3B = {60,30,9}; //right
