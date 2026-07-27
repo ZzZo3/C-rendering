@@ -189,7 +189,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
       }
     }
   }
-  char checkChar
+  char checkChar;
   if (drew) { checkChar = '🗸';} else { checkChar = '🗙';}
   printf("  %c\n",checkChar);
 }
