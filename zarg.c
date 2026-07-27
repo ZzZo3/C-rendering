@@ -220,9 +220,9 @@ void render() {
   printMATRIX();
 }
 
-int main() {
-  startup();
+/*-----------------> STUFF <-----------------*/
 
+void testShapes() {
 // TEST SHAPE 2D
 
   struct Point pA = {100,30};
@@ -349,6 +349,10 @@ int main() {
   draw3Line(&p3Ab,&p3Ob);
   draw3Line(&p3Ab,&p3Pb);
   draw3Line(&p3Ab,&p3Qb);
+}
 
+int main() {
+  startup();
+  testShapes();
   render();
 };
