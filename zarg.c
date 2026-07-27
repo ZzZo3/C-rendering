@@ -151,35 +151,45 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y, sortZ = bTemp->z > aTemp->z;
   bool alikeX = aTemp->x == bTemp->x, alikeY = aTemp->y == bTemp->y, alikeZ = aTemp->z == bTemp->z;
-  bool shallowXY = ( abs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || alikeY ) && !alikeX;
-  bool shallowXZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->x - aTemp->x)) <= 1.0 || alikeZ ) && !alikeX;
-  printf("  sortX %i  alikeX %i shallowXY %i  shallowXZ %i\n", sortX, alikeX, shallowXY, shallowXZ);
+  // drew nothing check
+  bool drew = false;
   // a<->b
   struct Point3 a, b;
-  if ( (sortX & sortY) || (sortX & (shallowXY || alikeY)) || (sortY & (!shallowXY || alikeX)) )
-  { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;}
-  // draw
-  bool drew = false;
-  if (shallowXZ) {
-    if (shallowXY) {
-      for (int xi=a.x; xi<=b.x; xi++) {
-        float yM = ((float)b.y-a.y)/(b.x-a.x);
-        float zM = ((float)b.z-a.z)/(b.x-a.x);
-        float y = yM * (xi - a.x) + a.y; // y in terms of x
-        float z = zM * (xi - a.x) + a.z; // z in terms of x
-        struct Point3 pTemp = {xi,y+0.5,z+0.5};
-        draw3Point(&pTemp);
-        drew = true;
-      }
-    } else {
-      for (int yi=a.y; yi<=b.y; yi++) {
-        float xM = ((float)b.x-a.x)/(b.y-a.y);
-        float zM = ((float)b.z-a.z)/(b.y-a.y);
-        float x = xM * (yi - a.y) + a.x; // x in terms of y
-        float z = zM * (yi - a.y) + a.z; // z in terms of y
-        struct Point3 pTemp = {x+0.5,yi,z+0.5};
-        draw3Point(&pTemp);
-        drew = true;
+  printf("  sortX %i  alikeX %i  alikeY %i  alikeZ %i", sortX, alikeX, alikeY, alikeZ);
+  if (alikeX) {
+    printf("\n");
+  } else if (alikeY) {
+    printf("\n");
+  } else if (alikeZ) {
+    printf("\n");
+  } else {
+    bool shallowXY = ( abs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || alikeY ) && !alikeX;
+    bool shallowXZ = ( abs(((float)bTemp->z - aTemp->z)/(bTemp->x - aTemp->x)) <= 1.0 || alikeZ ) && !alikeX;
+    printf("shallowXY %i  shallowXZ %i\n", shallowXY, shallowXZ);
+    if ( (sortX & sortY) || (sortX & (shallowXY || alikeY)) || (sortY & (!shallowXY || alikeX)) )
+    { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;}
+    // draw
+    if (shallowXZ) {
+      if (shallowXY) {
+        for (int xi=a.x; xi<=b.x; xi++) {
+          float yM = ((float)b.y-a.y)/(b.x-a.x);
+          float zM = ((float)b.z-a.z)/(b.x-a.x);
+          float y = yM * (xi - a.x) + a.y; // y in terms of x
+          float z = zM * (xi - a.x) + a.z; // z in terms of x
+          struct Point3 pTemp = {xi,y+0.5,z+0.5};
+          draw3Point(&pTemp);
+          drew = true;
+        }
+      } else {
+        for (int yi=a.y; yi<=b.y; yi++) {
+          float xM = ((float)b.x-a.x)/(b.y-a.y);
+          float zM = ((float)b.z-a.z)/(b.y-a.y);
+          float x = xM * (yi - a.y) + a.x; // x in terms of y
+          float z = zM * (yi - a.y) + a.z; // z in terms of y
+          struct Point3 pTemp = {x+0.5,yi,z+0.5};
+          draw3Point(&pTemp);
+          drew = true;
+        }
       }
     }
   }
