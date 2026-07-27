@@ -172,7 +172,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
         drew = true;
       }
     } else {
-      printf("! hi\n")
+      printf("! hi\n");
       for (int yi=a.y; yi<=b.y; yi++) {
         float xM = ((float)b.x-a.x)/(b.y-a.y);
         float zM = ((float)b.z-a.z)/(b.y-a.y);
