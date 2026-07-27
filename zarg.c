@@ -119,7 +119,7 @@ struct Point3 {
 void draw3Point(struct Point3 *p) { SPACIAL[p->z][p->y][p->x] = 1;}
 
 void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
-  printf(" printing 3D Line...");
+  printf(" printing IIID Line...");
   bool drew = false;
   /*struct Point3 a, b;
   if (aTemp->x > bTemp->x) {
@@ -224,7 +224,7 @@ void render() {
 
 void testShapes() {
 // TEST SHAPE 2D
-  printf(">Test Shape 2D\n");
+  printf(">Test Shape IID\n");
   struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
@@ -256,7 +256,7 @@ void testShapes() {
   draw3Line(&p3At,&p3Dt);draw3Line(&p3Bt,&p3Ct);
   draw3Line(&p3Bt,&p3Dt);draw3Line(&p3Ct,&p3Dt);
 // TEST SHAPE 3D a
-  printf(">Test Shape 3D a\n");
+  printf(">Test Shape IIID a\n");
   struct Point3 p3A = {145,30,9};
   struct Point3 p3B = {145,10,0};
   struct Point3 p3C = {165,20,0};
@@ -279,7 +279,7 @@ void testShapes() {
   draw3Line(&p3A,&p3J);draw3Line(&p3A,&p3K);draw3Line(&p3A,&p3L);draw3Line(&p3A,&p3M);
   draw3Line(&p3A,&p3N);draw3Line(&p3A,&p3O);draw3Line(&p3A,&p3P);draw3Line(&p3A,&p3Q);
 // TEST SHAPE 3D b
-  printf(">Test Shape 3D b\n");
+  printf(">Test Shape IIID b\n");
   struct Point3 p3Ab = {190,30,0};
   struct Point3 p3Bb = {190,10,9};
   struct Point3 p3Cb = {210,20,9};
