@@ -258,7 +258,7 @@ int main() {
    
   struct Point3 p3A = {40,20,0}; //mid
   struct Point3 p3B = {60,30,9}; //right
-  struct Point3 p3C = {41,10,3}; //top
+  struct Point3 p3C = {40,10,3}; //top
   struct Point3 p3D = {25,25,6}; //left
 
   draw3Line(&p3A,&p3B); //succeeds
