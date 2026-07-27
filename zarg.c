@@ -70,7 +70,7 @@ void drawFuncX(float (*f)(int), char fill) {
 float s_in(int x) { return 16*sin(x*M_PI/105) + 32;}
 
 void printMATRIX() {
-  printf(" printing MATRIX...\n");
+  printf(" drawing MATRIX...\n");
   termLine();
   for(int yi=0; yi<yDim; yi++) {
     for (int xi=0; xi<xDim; xi++) { printf("%c",MATRIX[yi][xi]);}
@@ -119,7 +119,7 @@ struct Point3 {
 void draw3Point(struct Point3 *p) { SPACIAL[p->z][p->y][p->x] = 1;}
 
 void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
-  printf(" printing IIID Line...");
+  printf(" drawing IIID Line...");
   bool drew = false;
   /*struct Point3 a, b;
   if (aTemp->x > bTemp->x) {
