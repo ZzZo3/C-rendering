@@ -327,23 +327,23 @@ int main() {
 
 // TEST SHAPE 3D !shallowXZ
 
-  struct Point3 p3Ab = {190,30,0};
-  struct Point3 p3Bb = {190,10,9};
-  struct Point3 p3Cb = {210,20,9};
-  struct Point3 p3Db = {210,30,9};
-  struct Point3 p3Eb = {210,40,9};
-  struct Point3 p3Fb = {190,50,9};
-  struct Point3 p3Gb = {170,40,9};
-  struct Point3 p3Hb = {170,30,9};
-  struct Point3 p3Ib = {170,20,9};
-  struct Point3 p3Jb = {180,10,9};
-  struct Point3 p3Kb = {200,10,9};
-  struct Point3 p3Lb = {200,50,9};
-  struct Point3 p3Mb = {180,50,9};
-  struct Point3 p3Nb = {175,15,9};
-  struct Point3 p3Ob = {205,15,9};
-  struct Point3 p3Pb = {205,45,9};
-  struct Point3 p3Qb = {175,45,9};
+  struct Point3 p3Ab = {190,30,9};
+  struct Point3 p3Bb = {190,10,0};
+  struct Point3 p3Cb = {210,20,0};
+  struct Point3 p3Db = {210,30,0};
+  struct Point3 p3Eb = {210,40,0};
+  struct Point3 p3Fb = {190,50,0};
+  struct Point3 p3Gb = {170,40,0};
+  struct Point3 p3Hb = {170,30,0};
+  struct Point3 p3Ib = {170,20,0};
+  struct Point3 p3Jb = {180,10,0};
+  struct Point3 p3Kb = {200,10,0};
+  struct Point3 p3Lb = {200,50,0};
+  struct Point3 p3Mb = {180,50,0};
+  struct Point3 p3Nb = {175,15,0};
+  struct Point3 p3Ob = {205,15,0};
+  struct Point3 p3Pb = {205,45,0};
+  struct Point3 p3Qb = {175,45,0};
 
   draw3Line(&p3Ab,&p3Bb);
   draw3Line(&p3Ab,&p3Cb);
