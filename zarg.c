@@ -181,14 +181,14 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   if (!drew) { printf("  failed to draw a single Point3\n");}
 }
 
-char arr[10] = "@%#*+=~-:.";
+char grad[10] = "@%#*+=~-:.";
 
 void SPACIAL_to_MATRIX() {
   printf(" transing SPACIAL to MATRIX...\n");
   for (int zi=zDim3-1; zi>=0; zi-=1) {
     for (int yi=0; yi<yDim3; yi++) {
       for (int xi=0; xi<xDim3; xi++) {
-        char shade = arr[zi];
+        char shade = grad[zi];
   if (SPACIAL[zi][yi][xi]==0) { }
   else { MATRIX[yi][xi] = shade;}
       }
