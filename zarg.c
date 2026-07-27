@@ -157,7 +157,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   bool drew = false;
   // a<->b
   struct Point3 a, b;
-  printf("  sortX %i  alikeX %i  alikeY %i  alikeZ %i  shallowXY %i  shallowXZ %i\n", sortX, alikeX, alikeY, alikeZ, shallowXY, shallowXZ);
+  printf("  sortX %i  alikeX %i  alikeY %i  alikeZ %i  shallowXY %i  shallowXZ %i", sortX, alikeX, alikeY, alikeZ, shallowXY, shallowXZ);
   if (alikeX) {
   } else if (alikeY) {
   } else if (alikeZ) {
@@ -189,7 +189,9 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
       }
     }
   }
-  if (!drew) { printf("  failed to draw a single Point3\n");}
+  char checkChar
+  if (drew) { checkChar = '🗸';} else { checkChar = '🗙';}
+  printf("  %c\n",checkChar);
 }
 
 char grad[10] = "@%#*+=~-:.";
