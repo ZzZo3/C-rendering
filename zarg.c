@@ -119,7 +119,7 @@ struct Point3 {
 void draw3Point(struct Point3 *p) { SPACIAL[p->z][p->y][p->x] = 1;}
 
 void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
-  printf(" printing 3D Line...\n");
+  printf(" printing 3D Line...");
   /*struct Point3 a, b;
   if (aTemp->x > bTemp->x) {
     a.x = bTemp->x;
