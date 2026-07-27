@@ -189,9 +189,9 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
       }
     }
   }
-  char checkChar;
-  if (drew) { checkChar = ':)';} else { checkChar = 'X(';}
-  printf("  %c\n",checkChar);
+  char checkChar[9];
+  if (drew) { checkChar = "[ ]";} else { checkChar = "[X]";}
+  printf("  %s\n",checkChar);
 }
 
 char grad[10] = "@%#*+=~-:.";
