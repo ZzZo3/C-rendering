@@ -184,7 +184,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   if (drew) { printf("\n");} else { printf("  !\n");}
 }
 
-char grad[13] = "@W%$so=+~\"-,.";
+char grad[13] = "@W%$so=+~:-,.";
 
 void SPACIAL_to_MATRIX() {
   printf(" transing SPACIAL to MATRIX...\n");
