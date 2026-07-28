@@ -106,7 +106,7 @@ void clearMATRIX() {
 
 /*-----------------> SPACIAL <-----------------*/
 
-int zDim3 = 10, yDim3 = 64, xDim3 = 210;
+int zDim3 = 13, yDim3 = 64, xDim3 = 210;
 bool SPACIAL[13][64][210];
 //          [ Z][ Y][ X]
 
