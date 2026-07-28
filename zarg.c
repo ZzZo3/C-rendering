@@ -282,8 +282,8 @@ void testShapes() {
   printf(">Test Shape IIID b\n");
   struct Point3 p3Ab = {190,30,0};
   struct Point3 p3Bb = {190,10,9};
-  struct Point3 p3Cb = {209,20,9};
-  struct Point3 p3Db = {209,30,9};
+  struct Point3 p3Cb = {208,20,9};
+  struct Point3 p3Db = {208,30,9};
   struct Point3 p3Eb = {210,40,9};
   struct Point3 p3Fb = {190,50,9};
   struct Point3 p3Gb = {170,40,9};
