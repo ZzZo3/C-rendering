@@ -107,7 +107,7 @@ void clearMATRIX() {
 /*-----------------> SPACIAL <-----------------*/
 
 int zDim3 = 10, yDim3 = 64, xDim3 = 210;
-bool SPACIAL[10][64][210];
+bool SPACIAL[13][64][210];
 //          [ Z][ Y][ X]
 
 struct Point3 {
@@ -184,7 +184,7 @@ void draw3Line(struct Point3 *aTemp, struct Point3 *bTemp) {
   if (drew) { printf("\n");} else { printf("  !\n");}
 }
 
-char grad[10] = "@%$s=+~-,.";
+char grad[13] = "@W%$so=+~\"-,.";
 
 void SPACIAL_to_MATRIX() {
   printf(" transing SPACIAL to MATRIX...\n");
@@ -249,7 +249,7 @@ void testShapes() {
 // PYRAMID 
   printf(">Pyramid\n");
   struct Point3 p3At = {40,20,0}; //mid
-  struct Point3 p3Bt = {60,30,9}; //right
+  struct Point3 p3Bt = {60,30,12}; //right
   struct Point3 p3Ct = {40,10,3}; //top
   struct Point3 p3Dt = {25,25,6}; //left
   draw3Line(&p3At,&p3Bt);draw3Line(&p3At,&p3Ct);
@@ -257,7 +257,7 @@ void testShapes() {
   draw3Line(&p3Bt,&p3Dt);draw3Line(&p3Ct,&p3Dt);
 // TEST SHAPE 3D a
   printf(">Test Shape IIID a\n");
-  struct Point3 p3A = {145,30,9};
+  struct Point3 p3A = {145,30,12};
   struct Point3 p3B = {145,10,0};
   struct Point3 p3C = {165,20,0};
   struct Point3 p3D = {165,30,0};
@@ -281,22 +281,22 @@ void testShapes() {
 // TEST SHAPE 3D b
   printf(">Test Shape IIID b\n");
   struct Point3 p3Ab = {190,30,0};
-  struct Point3 p3Bb = {190,10,9};
-  struct Point3 p3Cb = {209,20,9};
-  struct Point3 p3Db = {209,30,9};
-  struct Point3 p3Eb = {209,40,9};
-  struct Point3 p3Fb = {190,50,9};
-  struct Point3 p3Gb = {170,40,9};
-  struct Point3 p3Hb = {170,30,9};
-  struct Point3 p3Ib = {170,20,9};
-  struct Point3 p3Jb = {180,10,9};
-  struct Point3 p3Kb = {200,10,9};
-  struct Point3 p3Lb = {200,50,9};
-  struct Point3 p3Mb = {180,50,9};
-  struct Point3 p3Nb = {175,15,9};
-  struct Point3 p3Ob = {205,15,9};
-  struct Point3 p3Pb = {205,45,9};
-  struct Point3 p3Qb = {175,45,9};
+  struct Point3 p3Bb = {190,10,12};
+  struct Point3 p3Cb = {209,20,12};
+  struct Point3 p3Db = {209,30,12};
+  struct Point3 p3Eb = {209,40,12};
+  struct Point3 p3Fb = {190,50,12};
+  struct Point3 p3Gb = {170,40,12};
+  struct Point3 p3Hb = {170,30,12};
+  struct Point3 p3Ib = {170,20,12};
+  struct Point3 p3Jb = {180,10,12};
+  struct Point3 p3Kb = {200,10,12};
+  struct Point3 p3Lb = {200,50,12};
+  struct Point3 p3Mb = {180,50,12};
+  struct Point3 p3Nb = {175,15,12};
+  struct Point3 p3Ob = {205,15,12};
+  struct Point3 p3Pb = {205,45,12};
+  struct Point3 p3Qb = {175,45,12};
   draw3Line(&p3Ab,&p3Bb);draw3Line(&p3Ab,&p3Cb);draw3Line(&p3Ab,&p3Db);draw3Line(&p3Ab,&p3Eb);
   draw3Line(&p3Ab,&p3Fb);draw3Line(&p3Ab,&p3Gb);draw3Line(&p3Ab,&p3Hb);draw3Line(&p3Ab,&p3Ib);
   draw3Line(&p3Ab,&p3Jb);draw3Line(&p3Ab,&p3Kb);draw3Line(&p3Ab,&p3Lb);draw3Line(&p3Ab,&p3Mb);
