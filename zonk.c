@@ -11,7 +11,7 @@ int pol(float v) {
 }
 
 void termLine() {
-  for (int i=0; i<210; i++) {
+  for (int i=0; i<256; i++) {
     printf("-");
   }
   printf("\n");
