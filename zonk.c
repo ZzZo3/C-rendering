@@ -74,13 +74,13 @@ void printMATRIX() {
 void drawUI() {
   printf(" drawing UI...\n");
   struct Point p1 = {0,0};
-  struct Point p2 = {105,0};
-  struct Point p3 = {209,0};
-  struct Point p4 = {209,32};
-  struct Point p5 = {209,63};
-  struct Point p6 = {105,63};
-  struct Point p7 = {0,63};
-  struct Point p8 = {0,32};
+  struct Point p2 = {128,0};
+  struct Point p3 = {255,0};
+  struct Point p4 = {255,128};
+  struct Point p5 = {255,255};
+  struct Point p6 = {128,255};
+  struct Point p7 = {0,255};
+  struct Point p8 = {0,128};
   drawPoint(&p1,'\\');
   drawPoint(&p2,'|');
   drawPoint(&p3,'/');
