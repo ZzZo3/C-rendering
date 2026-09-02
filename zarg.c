@@ -17,6 +17,8 @@ void termLine() {
   printf("\n");
 }
 
+typedef int bool; bool false = 0, true = 1;
+
 /*-----------------> DRAW <-----------------*/
 
 int yDim = 64, xDim = 210;
