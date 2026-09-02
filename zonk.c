@@ -61,6 +61,11 @@ void drawLine(struct Point *aTemp, struct Point *bTemp, char fill) {
   }
 }
 
+void castNet(struct Point *aTemp, struct Point *bTemp, char fill) {
+  printf(" casting Net...\n");
+
+}
+
 void printMATRIX() {
   printf(" drawing MATRIX...\n");
   termLine();
