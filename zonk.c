@@ -65,30 +65,11 @@ void printMATRIX() {
   printf(" drawing MATRIX...\n");
   termLine();
   for(int yi=0; yi<yDim; yi++) {
+    printf("|");
     for (int xi=0; xi<xDim; xi++) { printf("%c",MATRIX[yi][xi]);}
-    printf("\n");
+    printf("|\n");
   }
   termLine();
-}
-
-void drawUI() {
-  printf(" drawing UI...\n");
-  struct Point p1 = {0,0};
-  struct Point p2 = {128,0};
-  struct Point p3 = {255,0};
-  struct Point p4 = {255,128};
-  struct Point p5 = {255,255};
-  struct Point p6 = {128,255};
-  struct Point p7 = {0,255};
-  struct Point p8 = {0,128};
-  drawPoint(&p1,'\\');
-  drawPoint(&p2,'|');
-  drawPoint(&p3,'/');
-  drawPoint(&p4,'-');
-  drawPoint(&p5,'\\');
-  drawPoint(&p6,'|');
-  drawPoint(&p7,'/');
-  drawPoint(&p8,'-');
 }
 
 void clearMATRIX() {
@@ -108,7 +89,6 @@ void startup() {
 
 void render() {
   printf("render()\n");
-  drawUI();
   printMATRIX();
 }
 
