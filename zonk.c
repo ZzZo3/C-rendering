@@ -4,8 +4,9 @@
 
 /*-----------------> CONSTANTS <-----------------*/
 
-#define yDim 65//115
-#define xDim 211//375
+#define yDim /*65*/115
+#define xDim /*211*/375
+#define gradL 13
 
 /*-----------------> UTIL <-----------------*/
 
@@ -43,6 +44,9 @@ void termLine() {
   };
   printf("\n");
 };
+
+char grad[14] = " .,-~:+=so$%W@";
+//char grad1[8] = "⠂⠢⠪⡪⡺⣫⣻⣿";
 
 //typedef int bool; bool false = 0, true = 1;
 
@@ -117,29 +121,27 @@ void clearUI() {
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { UI[y*xDim+x] = ' ';};};
 };
 
-char grad[13] = ".,-~:+=so$%W@";
-
 /*-----------------> SCENE <-----------------*/
 
 struct Tri3 TRIANGLES[10];
 
 void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
-  //printf(" casting ray...\n");
-  //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);i
+    //printf(" casting ray...\n");
+    //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);
   float value = 0.0;
   
   struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
   
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
-  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) {
-    value = 1.0;
-  } else {
-    value = (100-B->z)/100;
-  };
-    //printf("   value: %f\n",value);
-  if (value>1) { value=1.0;} else if (value<0) { value=0.0;};
-  int normValue = round(value*12);
+  value = (100-B->z)/100;
+  printf("  B->z: %f\n",B->z);
+  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) { value+=0.1;value*=2;};
+  
+  //printf("  value: %f",value);
+  if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
+  int normValue = round(value*gradL);
+  //printf("  normValue: %d\n",normValue);
   MATRIX[px->y*xDim+px->x] = grad[normValue];
 };
 
@@ -168,6 +170,9 @@ void  castNet(){
       pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
         //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
       */// 5. Get dy & dz from Line CAM -> pxTarget
+
+      if (pxTarget.x==0) { pxTarget.x++;};
+
       float dy = (pxTarget.y)/(pxTarget.x);
       float dz = (pxTarget.z)/(pxTarget.x);
         //printf("5. dy,dz: %f,%f\n",dy,dz);
