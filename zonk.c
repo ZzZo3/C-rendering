@@ -150,7 +150,6 @@ void  castNet(){
   printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
-  //int xi=1, yi=1;
       struct Point px = {xi,yi};
         //printf("0. px: {%d,%d}\n",xi,yi);
       // 1.0. Normalize pixel as pxNorm
@@ -169,13 +168,28 @@ void  castNet(){
       pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
       pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
         //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
-      */// 5. Get dy & dz from Line CAM -> pxTarget
-
-      if (pxTarget.x==0) { pxTarget.x++;};
-
-      float dy = (pxTarget.y)/(pxTarget.x);
-      float dz = (pxTarget.z)/(pxTarget.x);
-        //printf("5. dy,dz: %f,%f\n",dy,dz);
+      */// 5 Get slopes from Line CAM -> pxTarget
+      float dydx, dzdx;
+      float dxdy, dzdy;
+      float dydz, dxdz;
+      if (pxTarget.x!=0) {
+        dydx = pxTarget.y/pxTarget.x;
+        dzdx = pxTarget.z/pxTarget.x;
+        // use equations in terms of  x.
+      } else if (pxTarget.y!=0) {
+        dxdy = pxTarget.x/pxTarget.y;
+        dzdy = pxTarget.z/pxTarget.y;
+        // use equations in terms of  y.
+      } else if (pxTarget.z!=0) {
+        dydz = pxTarget.y/pxTarget.z;
+        dxdz = pxTarget.x/pxTarget.z;
+        // use equations in terms of  z.
+      } else {
+        printf("FATAL ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
+        return;
+      };
+      
+      printf("5. dydx,dzdx: %f,%f\n",dydx,dzdx);
       // 6. Adjust pxTarget by CAM
       pxTarget.x += CAM.x;
       pxTarget.y += CAM.y;
@@ -184,12 +198,12 @@ void  castNet(){
       // 7. Extrude Ray to Sphere
       struct Point3 spherePoint;
       float xSphereARR[2];
-      xSphereARR[0] = sqrt(radius*radius/(dy*dy+dz*dz+1)) + CAM.x;
-      xSphereARR[1] = sqrt(radius*radius/(dy*dy+dz*dz+1)) * -1 + CAM.x;
+      xSphereARR[0] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) + CAM.x;
+      xSphereARR[1] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) * -1 + CAM.x;
       if (pol(pxTarget.x - CAM.x)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
       else { spherePoint.x = xSphereARR[1];};
-      spherePoint.y = dy*(spherePoint.x - CAM.x) + CAM.y;
-      spherePoint.z = dz*(spherePoint.x - CAM.x) + CAM.z;
+      spherePoint.y = dydx*(spherePoint.x - CAM.x) + CAM.y;
+      spherePoint.z = dzdx*(spherePoint.x - CAM.x) + CAM.z;
         //printf("7. Extrude Ray to Sphere: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);
       // 8. Cast Ray
       castRay(&CAM, &spherePoint, &px);
