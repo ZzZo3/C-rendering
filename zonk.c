@@ -4,8 +4,8 @@
 
 /*-----------------> CONSTANTS <-----------------*/
 
-#define yDim 65
-#define xDim 211
+#define yDim 65//115
+#define xDim 211//375
 
 /*-----------------> UTIL <-----------------*/
 
@@ -27,9 +27,9 @@ struct Point3 CAM = {0,0,0};
 float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
-float MATRIXdist = 24;
+float MATRIXdist = 20;
 float yScale = 1.0;
-float xScale = 0.62;
+float xScale = 0.61;
 
 int pol(float v) {
   if (v>0) { return 1;};
@@ -117,7 +117,7 @@ void clearUI() {
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { UI[y*xDim+x] = ' ';};};
 };
 
-char grad[13] = "@W%$so=+~:-,.";
+char grad[13] = ".,-~:+=so$%W@";
 
 /*-----------------> SCENE <-----------------*/
 
@@ -126,16 +126,21 @@ struct Tri3 TRIANGLES[10];
 void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //printf(" casting ray...\n");
   //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);i
-  char fill = ' ';
+  float value = 0.0;
+  
   struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
+  
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
-  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) { fill=grad[0];}
-  else {
-    for (int i=0; i<12; i++) {
-      if (B->z < (11-i)*radius/12) { fill=grad[11-i];}
-    };
+  
+  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) {
+    value = 1.0;
+  } else {
+    value = (100-B->z)/100;
   };
-  MATRIX[px->y*xDim+px->x] = fill;
+    //printf("   value: %f\n",value);
+  if (value>1) { value=1.0;} else if (value<0) { value=0.0;};
+  int normValue = round(value*12);
+  MATRIX[px->y*xDim+px->x] = grad[normValue];
 };
 
 void  castNet(){
