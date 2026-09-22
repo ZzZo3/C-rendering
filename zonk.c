@@ -27,7 +27,7 @@ struct Point3 CAM = {0,0,0};
 float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
-float MATRIXdist = 33.33;
+float MATRIXdist = 24;
 float xScale = 0.64;
 
 int pol(float v) {
@@ -118,9 +118,9 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2 || (int)round(abs(B->z))%10<1) { fill=grad[0];}
   else {
-    if (B->z > 66) { fill=grad[12];}
-    else if (B->z < 33) { fill=grad[1];}
-    else {fill = grad[6];};
+    for (int i=0; i<12; i++) {
+      if (B->z < (11-i)*100/12) { fill=grad[11-i];}
+    };
   };
   MATRIX[px->y*xDim+px->x] = fill;
 };
