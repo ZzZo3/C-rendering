@@ -28,6 +28,7 @@ float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
 float MATRIXdist = 33.33;
+float xScale = 0.64;
 
 int pol(float v) {
   if (v>0) { return 1;};
@@ -133,7 +134,7 @@ void  castNet(){
       struct Point px = {xi,yi};
         //printf("0. px: {%d,%d}\n",xi,yi);
       // 1. Normalize pixel as pxNorm
-      struct Point3 pxNorm = {xi-105,yi-32,MATRIXdist};
+      struct Point3 pxNorm = {xScale*(xi-105),yi-32,MATRIXdist};
         //printf("1. pxNorm: {%f,%f,%f}\n",pxNorm.x,pxNorm.y,pxNorm.z);
       // 2. Define pxTarget 
       struct Point3 pxTarget = {pxNorm.x,pxNorm.y,pxNorm.z};
