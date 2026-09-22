@@ -129,19 +129,13 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
     //printf(" casting ray...\n");
     //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);
   float value = 0.0;
-  
-  struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
-  
+  //struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
-  
   value = (100-B->z)/100;
-  printf("  B->z: %f\n",B->z);
   if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) { value+=0.1;value*=2;};
-  
-  //printf("  value: %f",value);
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*gradL);
-  //printf("  normValue: %d\n",normValue);
+  if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
   MATRIX[px->y*xDim+px->x] = grad[normValue];
 };
 
@@ -150,62 +144,88 @@ void  castNet(){
   printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
+      // 0. Define px for later
       struct Point px = {xi,yi};
         //printf("0. px: {%d,%d}\n",xi,yi);
-      // 1.0. Normalize pixel as pxNorm
-      struct Point3 pxNorm = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),MATRIXdist};
-      // 1.1. Apply Matrix Transform
-      pxNorm.x = matrixTransform(pxNorm.x,'x');
-      pxNorm.y = matrixTransform(pxNorm.y,'y');
-        //printf("1. pxNorm: {%f,%f,%f}\n",pxNorm.x,pxNorm.y,pxNorm.z);
-      // 2. Define pxTarget 
-      struct Point3 pxTarget = {pxNorm.x,pxNorm.y,pxNorm.z};
-      /*// 3. Rotate {x,y} with thetaY
+      // 1. Normalize pixel as pxNorm
+      struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),MATRIXdist};
+      
+      // 2. Apply Matrix Transform
+      pxTarget.x = matrixTransform(pxTarget.x,'x');
+      pxTarget.y = matrixTransform(pxTarget.y,'y');
+        //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
+      
+      /* 3. Rotate {x,y} with thetaY
       pxTarget.x = radius*cos(acos((pxNorm.x+radius/radius)%(float)2-1)+thetaY);
       pxTarget.y = radius*sin(asin((pxNorm.y+radius/radius)%(float)2-1)+thetaY);
-        //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
-      // 4. Rotate {x,z} with thetaZ
+        printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
+      
+      //  4. Rotate {x,z} with thetaZ
       pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
       pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
-        //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
-      */// 5 Get slopes from Line CAM -> pxTarget
-      float dydx, dzdx;
-      float dxdy, dzdy;
-      float dydz, dxdz;
+        printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);*/
+
+      // 5 Get slopes from Line {0,0,0} -> pxTarget
+      float tempF, dydx, dzdx;
+      int caseX = 0;
       if (pxTarget.x!=0) {
-        dydx = pxTarget.y/pxTarget.x;
-        dzdx = pxTarget.z/pxTarget.x;
-        // use equations in terms of  x.
-      } else if (pxTarget.y!=0) {
-        dxdy = pxTarget.x/pxTarget.y;
-        dzdy = pxTarget.z/pxTarget.y;
-        // use equations in terms of  y.
-      } else if (pxTarget.z!=0) {
-        dydz = pxTarget.y/pxTarget.z;
-        dxdz = pxTarget.x/pxTarget.z;
-        // use equations in terms of  z.
+        // no swaps
+      } else if (pxTarget.y!=0) { // swap x->y
+        caseX = 1;
+        tempF = pxTarget.y;
+        pxTarget.y = pxTarget.x;
+        pxTarget.x = tempF;
+          //printf("5. Swapped x,y\n");
+      } else if (pxTarget.z!=0) { // swap x->z 
+        caseX = 2;
+        tempF = pxTarget.z;
+        pxTarget.z = pxTarget.x;
+        pxTarget.x = tempF;
+          //printf("5. Swapped x,z\n");
       } else {
         printf("FATAL ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
         return;
       };
-      
-      printf("5. dydx,dzdx: %f,%f\n",dydx,dzdx);
-      // 6. Adjust pxTarget by CAM
+      dydx = pxTarget.y/pxTarget.x;
+      dzdx = pxTarget.z/pxTarget.x;
+        //printf("5. dydx,dzdx: %f,%f\n",dydx,dzdx);
+
+      /* 6. Adjust pxTarget by CAM
       pxTarget.x += CAM.x;
       pxTarget.y += CAM.y;
       pxTarget.z += CAM.z;
-        //printf("6. Adjust pxTarget by CAM. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
+        printf("6. Adjust pxTarget by CAM. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);*/
+      
       // 7. Extrude Ray to Sphere
       struct Point3 spherePoint;
       float xSphereARR[2];
-      xSphereARR[0] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) + CAM.x;
-      xSphereARR[1] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) * -1 + CAM.x;
-      if (pol(pxTarget.x - CAM.x)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
+      xSphereARR[0] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1))/* + CAM.x*/;
+      xSphereARR[1] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) * -1/* + CAM.x*/;
+      if (pol(pxTarget.x/* - CAM.x*/)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
       else { spherePoint.x = xSphereARR[1];};
-      spherePoint.y = dydx*(spherePoint.x - CAM.x) + CAM.y;
-      spherePoint.z = dzdx*(spherePoint.x - CAM.x) + CAM.z;
+      spherePoint.y = dydx*(spherePoint.x/* - CAM.x*/)/* + CAM.y*/;
+      spherePoint.z = dzdx*(spherePoint.x/* - CAM.x*/)/* + CAM.z*/;
         //printf("7. Extrude Ray to Sphere: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);
-      // 8. Cast Ray
+      
+      // 8. Translate backwards {x,y,z}
+      if (caseX==0) {
+        // no swaps
+      } else if (caseX==1) { // swap x->y
+        tempF = spherePoint.y;
+        spherePoint.y = spherePoint.x;
+        spherePoint.x = tempF;
+          //printf("8. Swapped y,x\n");
+      } else if (caseX==2) { // swap x->z 
+        tempF = spherePoint.z;
+        spherePoint.z = spherePoint.x;
+        spherePoint.x = tempF;
+          //printf("8. Swapped z,x\n");
+      }
+      spherePoint.x+=CAM.x;
+      spherePoint.y+=CAM.y;
+      spherePoint.z+=CAM.z;
+      if (spherePoint.z==0) { printf("9. spherePoint: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);};
+      // 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
   };
