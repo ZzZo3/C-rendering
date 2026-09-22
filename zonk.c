@@ -28,8 +28,8 @@ float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
 float MATRIXdist = 33.33;
-float yScale = 1;
-float xScale = 0.64;
+float yScale = 1.0;
+float xScale = 0.62;
 
 int pol(float v) {
   if (v>0) { return 1;};
