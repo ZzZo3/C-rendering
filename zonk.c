@@ -27,7 +27,7 @@ struct Point3 CAM = {0,0,0};
 float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
-float MATRIXdist = 33.33;
+float MATRIXdist = 24;
 float yScale = 1.0;
 float xScale = 0.62;
 
@@ -95,6 +95,18 @@ void printMATRIX() {
   termLine();
 };
 
+float matrixTransform(float p, char axis) {
+  if (p==0) { return 0;}
+  if (axis=='x') {
+    p += (2*p*p*p)/(abs(p)*xDim);
+    p /= 2;
+  } else if (axis=='y') {
+    p += (2*p*p*p)/(abs(p)*xDim);
+    p /= 2;
+  }
+  return p;
+};
+
 void clearMATRIX() {
   printf(" clearing MATRIX...\n");
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { MATRIX[y*xDim+x] = ' ';};};
@@ -128,14 +140,17 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
 
 void  castNet(){
   printf(" casting Net...\n");
-  printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist);
+  printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
   //int xi=1, yi=1;
       struct Point px = {xi,yi};
         //printf("0. px: {%d,%d}\n",xi,yi);
-      // 1. Normalize pixel as pxNorm
+      // 1.0. Normalize pixel as pxNorm
       struct Point3 pxNorm = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),MATRIXdist};
+      // 1.1. Apply Matrix Transform
+      pxNorm.x = matrixTransform(pxNorm.x,'x');
+      pxNorm.y = matrixTransform(pxNorm.y,'y');
         //printf("1. pxNorm: {%f,%f,%f}\n",pxNorm.x,pxNorm.y,pxNorm.z);
       // 2. Define pxTarget 
       struct Point3 pxTarget = {pxNorm.x,pxNorm.y,pxNorm.z};
