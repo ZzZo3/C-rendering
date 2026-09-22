@@ -2,38 +2,54 @@
 #include <stdlib.h>
 #include <math.h>
 
+/*-----------------> CONSTANTS <-----------------*/
+
+#define yDim 65
+#define xDim 211
+
 /*-----------------> UTIL <-----------------*/
 
-int pol(float v) {
-  if (v>0) { return 1;}
-  if (v<0) { return -1;}
-  return 0;
-}
-
-void termLine() {
-  for (int i=0; i<258; i++) {
-    printf("-");
-  }
-  printf("\n");
-}
-
-typedef int bool; bool false = 0, true = 1;
-
-/*-----------------> MATRIX [NOT SCREEN] <-----------------*/
-
-int yDim = 256, xDim = 256;
-char MATRIX[256][256];
-//         [ Y][  X]
-
 struct Point {
-  int x;
-  int y;
+  int x,y;
 };
 
-void drawPoint(struct Point *p, char fill) { MATRIX[p->y][p->x] = fill;}
+struct Point3 {
+  float x,y,z;
+};
+
+struct Tri3 {
+  struct Point3 a,b,c;
+};
+
+char* MATRIX;
+char* UI;
+struct Point3 CAM = {0,0,0};
+float thetaY = 0;
+float thetaZ = 0;
+float radius = 100;
+float MATRIXdist = 33.33;
+
+int pol(float v) {
+  if (v>0) { return 1;};
+  if (v<0) { return -1;};
+  return 0;
+};
+
+void termLine() {
+  for (int i=0; i<xDim+2; i++) {
+    printf("-");
+  };
+  printf("\n");
+};
+
+//typedef int bool; bool false = 0, true = 1;
+
+/*-----------------> MATRIX <-----------------*/
+
+void drawPoint(char* ARRAY, struct Point *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
 
 //
-void drawLine(struct Point *aTemp, struct Point *bTemp, char fill) {
+void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) {
   printf(" drawing Line...\n");
   // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
@@ -41,67 +57,124 @@ void drawLine(struct Point *aTemp, struct Point *bTemp, char fill) {
   bool shallow = ( abs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
   // a<->b
   struct Point a, b;
-  if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) )
-  { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;}
+  if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) ) { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;};
   // draw
   if (shallow) {
     for (int xi=a.x; xi<=b.x; xi++) {
       float m = ((float)b.y-a.y)/(b.x-a.x);
       float y = m * (xi - a.x) + a.y;
       struct Point pTemp = {xi,y+0.5};
-      drawPoint(&pTemp,fill);
-    }
+      drawPoint(ARRAY,&pTemp,fill);
+    };
   } else {
     for (int yi=a.y; yi<=b.y; yi++) {
       float m = ((float)b.x-a.x)/(b.y-a.y);
       float x = m * (yi-a.y) + a.x;
       struct Point pTemp = {x+0.5,yi};
-      drawPoint(&pTemp,fill);
-    }
-  }
-}
-
-void castNet(struct Point *aTemp, struct Point *bTemp, char fill) {
-  printf(" casting Net...\n");
-
-}
+      drawPoint(ARRAY,&pTemp,fill);
+    };
+  };
+};
 
 void printMATRIX() {
   printf(" drawing MATRIX...\n");
   termLine();
   for(int yi=0; yi<yDim; yi++) {
     printf("|");
-    for (int xi=0; xi<xDim; xi++) { printf("%c",MATRIX[yi][xi]);}
+    for (int xi=0; xi<xDim; xi++) {
+      if (UI[yi*xDim+xi]==' ') {
+        printf("%c",MATRIX[yi*xDim+xi]);
+      } else {
+        printf("%c",UI[yi*xDim+xi]);
+      };
+    };
     printf("|\n");
   }
   termLine();
-}
+};
 
 void clearMATRIX() {
   printf(" clearing MATRIX...\n");
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { MATRIX[y][x] = ' ';} }
-}
+  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { MATRIX[y*xDim+x] = ' ';};};
+};
 
-//char grad[13] = "@W%$so=+~:-,.";
+void clearUI() {
+  printf(" clearing UI...\n");
+  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { UI[y*xDim+x] = ' ';};};
+};
 
-/*-----------------> PROG <-----------------*/
+char grad[13] = "@W%$so=+~:-,.";
 
-void startup() {
-  termLine();
-  printf("startup()\n");
-  clearMATRIX();
-}
+/*-----------------> SCENE <-----------------*/
 
-void render() {
-  printf("render()\n");
-  printMATRIX();
-}
+struct Tri3 TRIANGLES[10];
+
+void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
+  //printf(" casting ray...\n");
+  //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);i
+  char fill = ' ';
+  struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
+  //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
+  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2 || (int)round(abs(B->z))%10<1) { fill=grad[0];}
+  else {
+    if (B->z > 66) { fill=grad[12];}
+    else if (B->z < 33) { fill=grad[1];}
+    else {fill = grad[6];};
+  };
+  MATRIX[px->y*xDim+px->x] = fill;
+};
+
+void  castNet(){
+  printf(" casting Net...\n");
+  printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist);
+  for(int yi=0; yi<yDim; yi++) {
+    for(int xi=0; xi<xDim; xi++) {
+  //int xi=1, yi=1;
+      struct Point px = {xi,yi};
+        //printf("0. px: {%d,%d}\n",xi,yi);
+      // 1. Normalize pixel as pxNorm
+      struct Point3 pxNorm = {xi-105,yi-32,MATRIXdist};
+        //printf("1. pxNorm: {%f,%f,%f}\n",pxNorm.x,pxNorm.y,pxNorm.z);
+      // 2. Define pxTarget 
+      struct Point3 pxTarget = {pxNorm.x,pxNorm.y,pxNorm.z};
+      /*// 3. Rotate {x,y} with thetaY
+      pxTarget.x = radius*cos(acos((pxNorm.x+radius/radius)%(float)2-1)+thetaY);
+      pxTarget.y = radius*sin(asin((pxNorm.y+radius/radius)%(float)2-1)+thetaY);
+        //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
+      // 4. Rotate {x,z} with thetaZ
+      pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
+      pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
+        //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
+      */// 5. Get dy & dz from Line CAM -> pxTarget
+      float dy = (pxTarget.y)/(pxTarget.x);
+      float dz = (pxTarget.z)/(pxTarget.x);
+        //printf("5. dy,dz: %f,%f\n",dy,dz);
+      // 6. Adjust pxTarget by CAM
+      pxTarget.x += CAM.x;
+      pxTarget.y += CAM.y;
+      pxTarget.z += CAM.z;
+        //printf("6. Adjust pxTarget by CAM. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
+      // 7. Extrude Ray to Sphere
+      struct Point3 spherePoint;
+      float xSphereARR[2];
+      xSphereARR[0] = sqrt(radius*radius/(dy*dy+dz*dz+1)) + CAM.x;
+      xSphereARR[1] = sqrt(radius*radius/(dy*dy+dz*dz+1)) * -1 + CAM.x;
+      if (pol(pxTarget.x - CAM.x)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
+      else { spherePoint.x = xSphereARR[1];};
+      spherePoint.y = dy*(spherePoint.x - CAM.x) + CAM.y;
+      spherePoint.z = dz*(spherePoint.x - CAM.x) + CAM.z;
+        //printf("7. Extrude Ray to Sphere: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);
+      // 8. Cast Ray
+      castRay(&CAM, &spherePoint, &px);
+    };
+  };
+};
 
 /*-----------------> CONTENT <-----------------*/
 
-void build() {
+void build2() {
 // TEST SHAPE 2D
-  printf(">Test Shape IID\n");
+  printf("Testing Shapes 2D...\n");
   struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
@@ -119,14 +192,78 @@ void build() {
   struct Point pO = {115,15};
   struct Point pP = {115,45};
   struct Point pQ = {85,45};
-  drawLine(&pA,&pB,'.');drawLine(&pA,&pC,'.');drawLine(&pA,&pD,'.');drawLine(&pA,&pE,'.');
-  drawLine(&pA,&pF,'.');drawLine(&pA,&pG,'.');drawLine(&pA,&pH,'.');drawLine(&pA,&pI,'.');
-  drawLine(&pA,&pJ,'.');drawLine(&pA,&pK,'.');drawLine(&pA,&pL,'.');drawLine(&pA,&pM,'.');
-  drawLine(&pA,&pN,'.');drawLine(&pA,&pO,'.');drawLine(&pA,&pP,'.');drawLine(&pA,&pQ,'.');
-}
+  drawLine(MATRIX,&pA,&pB,'.');drawLine(MATRIX,&pA,&pC,'.');drawLine(MATRIX,&pA,&pD,'.');drawLine(MATRIX,&pA,&pE,'.');
+  drawLine(MATRIX,&pA,&pF,'.');drawLine(MATRIX,&pA,&pG,'.');drawLine(MATRIX,&pA,&pH,'.');drawLine(MATRIX,&pA,&pI,'.');
+  drawLine(MATRIX,&pA,&pJ,'.');drawLine(MATRIX,&pA,&pK,'.');drawLine(MATRIX,&pA,&pL,'.');drawLine(MATRIX,&pA,&pM,'.');
+  drawLine(MATRIX,&pA,&pN,'.');drawLine(MATRIX,&pA,&pO,'.');drawLine(MATRIX,&pA,&pP,'.');drawLine(MATRIX,&pA,&pQ,'.');
+};
+void build3() {
+  printf("Testing Shapes 3D...\n");
+  struct Point3 p3camera = {0,0,0};
+  struct Point3 p3target = {100,0,0};
+  struct Point3 p3A = {65,-30,-60};
+  struct Point3 p3B = {65,-30,60};
+  struct Point3 p3C = {80,60,0};
+  struct Tri3 t3A = {p3A,p3B,p3C};
+  TRIANGLES[0] = t3A;
+};
+
+void buildUI() {
+  struct Point pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
+  struct Point pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
+  struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
+  drawPoint(UI, &pUIa,'\\');drawPoint(UI, &pUIb,'|');drawPoint(UI, &pUIc,'/');
+  drawPoint(UI, &pUId,'-');drawPoint(UI, &pUIe,'-');
+  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');
+};
+
+/*-----------------> PROG <-----------------*/
+
+void startup() {
+  termLine();
+  printf("startup()\n");
+  clearMATRIX();
+  clearUI();
+};
+
+void render() {
+  printf("render()\n");
+  build2();
+  build3();
+  castNet();
+  buildUI();
+  printMATRIX();
+};
+
+/*-----------------> MAIN <-----------------*/
 
 int main() {
+  MATRIX=(char*)malloc(xDim*yDim);
+  UI=(char*)malloc(xDim*yDim);
   startup();
-  build();
   render();
+  bool running = true;
+  while (running) {
+    int inint = 0;
+    float infloat = 0;
+    printf("> ");
+    scanf("%d",&inint);
+    if (inint==0) { running=false;}
+    else if (inint==1) { printf("CODES HELP:\n  0 - exit\n  1 - help \(you are here.)\n  2 - render\n  3 - change render variable\n");}
+    else if (inint==2) {
+      startup();
+      render();}
+    else if (inint==3) {
+      printf("VARIABLE CODES:\n  0 - MATRIXdist\n");
+      printf("> ");
+      scanf("%d",&inint);
+      if (inint==0) {
+        printf("> ");
+        scanf("%f",MATRIXdist);
+      }
+      else { printf("ERROR: unknown input. 1 for help\n");};
+    }
+    else { printf("ERROR: unknown input. 1 for help.\n");};
+  };
+  return 0;
 };
