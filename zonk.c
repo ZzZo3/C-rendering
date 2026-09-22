@@ -116,7 +116,7 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   char fill = ' ';
   struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
-  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2 || (int)round(abs(B->z))%10<1) { fill=grad[0];}
+  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) { fill=grad[0];}
   else {
     for (int i=0; i<12; i++) {
       if (B->z < (11-i)*100/12) { fill=grad[11-i];}
@@ -246,15 +246,15 @@ int main() {
   bool running = true;
   while (running) {
     int inint = 0;
-    float infloat = 0;
+    //float infloat = 0;
     printf("> ");
     scanf("%d",&inint);
     if (inint==0) { running=false;}
-    else if (inint==1) { printf("CODES HELP:\n  0 - exit\n  1 - help \(you are here.)\n  2 - render\n  3 - change render variable\n");}
+    else if (inint==1) { printf("CODES HELP:\n  0 - exit\n  1 - help \(you are here.)\n  2 - render\n");}
     else if (inint==2) {
       startup();
       render();}
-    else if (inint==3) {
+    /*else if (inint==3) {
       printf("VARIABLE CODES:\n  0 - MATRIXdist\n");
       printf("> ");
       scanf("%d",&inint);
@@ -263,7 +263,7 @@ int main() {
         scanf("%f",MATRIXdist);
       }
       else { printf("ERROR: unknown input. 1 for help\n");};
-    }
+    }*/
     else { printf("ERROR: unknown input. 1 for help.\n");};
   };
   return 0;
