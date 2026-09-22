@@ -102,7 +102,7 @@ float matrixTransform(float p, char axis) {
     p /= 2;
   } else if (axis=='y') {
     p += (2*p*p*p)/(abs(p)*xDim);
-    p /= 2;
+    p /= -2;
   }
   return p;
 };
