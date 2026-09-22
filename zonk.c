@@ -153,6 +153,9 @@ void  castNet(){
       // 2. Apply Matrix Transform
       pxTarget.x = matrixTransform(pxTarget.x,'x');
       pxTarget.y = matrixTransform(pxTarget.y,'y');
+
+      float stepTwoTargetX = pxTarget.x;
+      float stepTwoTargetY = pxTarget.y;
         //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
       
       /* 3. Rotate {x,y} with thetaY
@@ -224,7 +227,7 @@ void  castNet(){
       spherePoint.x+=CAM.x;
       spherePoint.y+=CAM.y;
       spherePoint.z+=CAM.z;
-      if (spherePoint.z==0) { printf("9. pxTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
+      if (spherePoint.z==0) { printf("9. stepTwoTargetX,Y: [%f,%f]  xTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",stepTwoTargetX,stepTwoTargetY,pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
       // 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
