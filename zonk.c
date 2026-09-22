@@ -224,7 +224,7 @@ void  castNet(){
       spherePoint.x+=CAM.x;
       spherePoint.y+=CAM.y;
       spherePoint.z+=CAM.z;
-      if (spherePoint.z==0) { printf("9. spherePoint: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);};
+      if (spherePoint.z==0) { printf("9. pxTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
       // 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
