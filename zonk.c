@@ -60,7 +60,7 @@ void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) 
   // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
   bool vert = aTemp->x == bTemp->x, horz = aTemp->y == bTemp->y;
-  bool shallow = ( abs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
+  bool shallow = ( fabs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
   // a<->b
   struct Point a, b;
   if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) ) { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;};
@@ -102,10 +102,17 @@ void printMATRIX() {
 float matrixTransform(float p, char axis) {
   if (p==0) { return 0;}
   if (axis=='x') {
-    p += (2*p*p*p)/(abs(p)*xDim);
+      printf("p: %f->",p);
+    float p1 = 2*p*p*p;
+    float p2 = fabs(p)*xDim;
+    float p3 = p1/p2;
+    float p4 = p+p3;
+    p += (2*p*p*p)/(fabs(p)*xDim);
     p /= 2;
+      printf("[%f,%f,%f,%f]",p1,p2,p3,p4);
+      printf("->%f\n",p);
   } else if (axis=='y') {
-    p += (2*p*p*p)/(abs(p)*xDim);
+    p += (2*p*p*p)/(fabs(p)*xDim);
     p /= -2;
   }
   return p;
@@ -132,7 +139,7 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   value = (100-B->z)/100;
-  if ((int)round(abs(B->x))%10<2 || (int)round(abs(B->y))%10<2) { value+=0.1;value*=2;};
+  if ((int)round(fabs(B->x))%10<2 || (int)round(fabs(B->y))%10<2) { value+=0.1;value*=2;};
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*gradL);
   if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
