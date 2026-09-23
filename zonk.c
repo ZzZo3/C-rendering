@@ -142,12 +142,13 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   
   //value = (100-B->z)/100;
   if (B->x > 0) {
-    if (B->y > 0) { value=0.07;} else { value=1.0;};
+    if (B->y > 0) { value=0.07;} else { value=0.8;};
   } else {
     if (B->y > 0) { value=0.33;} else { value=0.66;};
   };
-  
-  //if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
+  if (B->z < 0) { value=0.0;};
+
+  if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
   
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
@@ -173,7 +174,7 @@ void  castNet(){
       
       // 3. Rotate {x,y} with thetaY
       //pxTarget.x = polBin(pxTarget.x)*radius*cos(acos(polBin(pxTarget.x)*pxTarget.x/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
-      pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
+      pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY/*polBin(pxTarget.x)*/*polBin(pxTarget.y));
         //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
       
       /*  4. Rotate {x,z} with thetaZ
