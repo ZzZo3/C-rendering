@@ -28,7 +28,7 @@ struct Point3 CAM = {0,0,0};
 float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
-float MATRIXdist = 20;
+float MATRIXdist = 16;
 float yScale = 1.0;
 float xScale = 0.61;
 
@@ -118,11 +118,11 @@ float matrixTransform(float p, char axis) {
   if (axis=='x') {
       //printf("p: %f->",p);
     p += (2*p*p*p)/(fabs(p)*xDim);
-    p /= 2;
+    p /= 3;
       //printf("->%f\n",p);
   } else if (axis=='y') {
     p += (2*p*p*p)/(fabs(p)*xDim);
-    p /= -2;
+    p /= -3;
   }
   return p;
 };
@@ -278,7 +278,7 @@ void buildUI() {
   struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
   drawPoint(UI, &pUIa,'\\');drawPoint(UI, &pUIb,'|');drawPoint(UI, &pUIc,'/');
   drawPoint(UI, &pUId,'-');drawPoint(UI, &pUIe,'-');
-  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');
+  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');/
 };
 
 /*-----------------> PROG <-----------------*/
