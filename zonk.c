@@ -173,7 +173,7 @@ void  castNet(){
         //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
       
       // 3. Rotate {x,y} with thetaY
-      //pxTarget.x = polBin(pxTarget.x)*radius*cos(acos(polBin(pxTarget.x)*pxTarget.x/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
+      pxTarget.z = polBin(pxTarget.z)*radius*cos(acos(polBin(pxTarget.z)*pxTarget.z/radius) + thetaY*polBin(pxTarget.z)/*polBin(pxTarget.y)*/);
       pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY/*polBin(pxTarget.x)*/*polBin(pxTarget.y));
         //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
       
