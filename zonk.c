@@ -241,9 +241,17 @@ void  castNet(){
 
 /*-----------------> CONTENT <-----------------*/
 
-void build2() {
-// TEST SHAPE 2D
-  printf("Testing Shapes 2D...\n");
+void buildScene() {
+  printf("building Scene...\n");
+  struct Point3 p3A = {65,-30,-60};
+  struct Point3 p3B = {65,-30,60};
+  struct Point3 p3C = {80,60,0};
+  struct Tri3 t3A = {p3A,p3B,p3C};
+  TRIANGLES[0] = t3A;
+};
+
+void buildUI() {
+  printf("building UI...\n");
   struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
@@ -261,23 +269,10 @@ void build2() {
   struct Point pO = {115,15};
   struct Point pP = {115,45};
   struct Point pQ = {85,45};
-  drawLine(MATRIX,&pA,&pB,'.');drawLine(MATRIX,&pA,&pC,'.');drawLine(MATRIX,&pA,&pD,'.');drawLine(MATRIX,&pA,&pE,'.');
-  drawLine(MATRIX,&pA,&pF,'.');drawLine(MATRIX,&pA,&pG,'.');drawLine(MATRIX,&pA,&pH,'.');drawLine(MATRIX,&pA,&pI,'.');
-  drawLine(MATRIX,&pA,&pJ,'.');drawLine(MATRIX,&pA,&pK,'.');drawLine(MATRIX,&pA,&pL,'.');drawLine(MATRIX,&pA,&pM,'.');
-  drawLine(MATRIX,&pA,&pN,'.');drawLine(MATRIX,&pA,&pO,'.');drawLine(MATRIX,&pA,&pP,'.');drawLine(MATRIX,&pA,&pQ,'.');
-};
-void build3() {
-  printf("Testing Shapes 3D...\n");
-  struct Point3 p3camera = {0,0,0};
-  struct Point3 p3target = {100,0,0};
-  struct Point3 p3A = {65,-30,-60};
-  struct Point3 p3B = {65,-30,60};
-  struct Point3 p3C = {80,60,0};
-  struct Tri3 t3A = {p3A,p3B,p3C};
-  TRIANGLES[0] = t3A;
-};
-
-void buildUI() {
+  drawLine(UI,&pA,&pB,'.');drawLine(UI,&pA,&pC,'.');drawLine(UI,&pA,&pD,'.');drawLine(UI,&pA,&pE,'.');
+  drawLine(UI,&pA,&pF,'.');drawLine(UI,&pA,&pG,'.');drawLine(UI,&pA,&pH,'.');drawLine(UI,&pA,&pI,'.');
+  drawLine(UI,&pA,&pJ,'.');drawLine(UI,&pA,&pK,'.');drawLine(UI,&pA,&pL,'.');drawLine(UI,&pA,&pM,'.');
+  drawLine(UI,&pA,&pN,'.');drawLine(UI,&pA,&pO,'.');drawLine(UI,&pA,&pP,'.');drawLine(UI,&pA,&pQ,'.');
   struct Point pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
   struct Point pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
   struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
@@ -297,8 +292,7 @@ void startup() {
 
 void render() {
   printf("render()\n");
-  build2();
-  build3();
+  buildScene();
   castNet();
   buildUI();
   printMATRIX();
