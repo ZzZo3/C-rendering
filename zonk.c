@@ -4,8 +4,8 @@
 
 /*-----------------> CONSTANTS <-----------------*/
 
-#define yDim /*65*/115
-#define xDim /*211*/375
+#define yDim /*65*/  115
+#define xDim /*211*/ 375
 #define gradL 14
 
 /*-----------------> UTIL <-----------------*/
@@ -25,12 +25,12 @@ struct Tri3 {
 char* MATRIX;
 char* UI;
 struct Point3 CAM = {0,0,0};
-float thetaY = 0.1;
+float thetaY = 0;
 float thetaZ = 0;
 float radius = 100;
-float MATRIXdist = 16;
-float yScale = 1.0;
-float xScale = 0.61;
+float MATRIXdist = 12;
+float yScale = 0.10;
+float xScale = 0.061;
 
 int pol(float v) {
   if (v>0) { return 1;};
@@ -119,7 +119,7 @@ void clearUI() {
 struct Tri3 TRIANGLES[10];
 
 float matrixTransform(float p, char axis) {
-  if (p==0) { return 0;}
+  /*if (p==0) { return 0;}
   if (axis=='x') {
       //printf("p: %f->",p);
     p += (2*p*p*p)/(fabs(p)*xDim);
@@ -128,28 +128,33 @@ float matrixTransform(float p, char axis) {
   } else if (axis=='y') {
     p += (2*p*p*p)/(fabs(p)*xDim);
     p /= -3;
-  }
+  };*/
   return p;
 };
 
 void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
     //printf(" casting ray...\n");
-    //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}\n",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);
+    //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);
   float value = 0.0;
   
-  //struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
+  struct Point3 d; d.x = B->x - A->x; d.y = B->y - A->y; d.z = B->z - A->z;
+  
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
   //value = (100-B->z)/100;
-  if (B->x > 0) {
+  /*if (B->x > 0) {
     if (B->y > 0) { value=0.07;} else { value=0.8;};
   } else {
     if (B->y > 0) { value=0.33;} else { value=0.66;};
   };
-  if (B->z < 0) { value=0.0;};
+  //if (B->z < 0) { value=0.0;};
+  */
 
-  if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
-  
+  float dAbs = sqrt(d.x*d.x+d.y*d.y+d.z*d.z);
+  value = (radius-dAbs)/radius;
+  if (fmodf(fabs(B->x),10)<1.67 || fmodf(fabs(B->y),10)<1.67 || fmodf(fabs(B->z),10)<1.67) { value+=0.15;value*=2;};
+    //printf("d: {%f,%f,%f} -> %f -> %f\n",d.x,d.y,d.z,dAbs,value);
+
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
   if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
@@ -172,15 +177,20 @@ void  castNet(){
       pxTarget.y = matrixTransform(pxTarget.y,'y');
         //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
       
-      // 3. Rotate {x,y} with thetaY
-      pxTarget.z = polBin(pxTarget.z)*radius*cos(acos(polBin(pxTarget.z)*pxTarget.z/radius) + thetaY*polBin(pxTarget.z)/*polBin(pxTarget.y)*/);
-      pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY/*polBin(pxTarget.x)*/*polBin(pxTarget.y));
+      // 3. Rotate {y,z} with thetaY
+      // 3.0 Find new radius r1 in terms of x
+      float r1 = sqrt(radius*radius - pxTarget.x*pxTarget.x);
+      // 3.1
+      pxTarget.z = polBin(pxTarget.z)*r1*cos(acos(polBin(pxTarget.z)*pxTarget.z/r1) + thetaY*polBin(pxTarget.z));
+      pxTarget.y = polBin(pxTarget.y)*r1*sin(asin(polBin(pxTarget.y)*pxTarget.y/r1) + thetaY*polBin(pxTarget.y));
         //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
       
-      /*  4. Rotate {x,z} with thetaZ
-      pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
-      pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
-        printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);*/
+      // 4. Rotate {x,z} with thetaZ
+      // 4.0 Find new radius r2 in terms of y
+      float r2 = sqrt(radius*radius - pxTarget.y*pxTarget.y);
+      pxTarget.x = polBin(pxTarget.x)*r2*cos(acos(polBin(pxTarget.x)*pxTarget.x/r2) + thetaZ*polBin(pxTarget.x));
+      pxTarget.z = polBin(pxTarget.z)*r2*sin(asin(polBin(pxTarget.z)*pxTarget.z/r2) + thetaZ*polBin(pxTarget.z));
+        //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
 
       // 5 Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
@@ -316,26 +326,27 @@ int main() {
   render();
   bool running = true;
   while (running) {
-    int inint = 0;
+    char input = ' ';
     //float infloat = 0;
     printf("> ");
-    scanf("%d",&inint);
-    if (inint==0) { running=false;}
-    else if (inint==1) { printf("CODES HELP:\n  0 - exit\n  1 - help \(you are here.)\n  2 - render\n");}
-    else if (inint==2) {
-      startup();
-      render();}
-    /*else if (inint==3) {
-      printf("VARIABLE CODES:\n  0 - MATRIXdist\n");
-      printf("> ");
-      scanf("%d",&inint);
-      if (inint==0) {
-        printf("> ");
-        scanf("%f",MATRIXdist);
-      }
-      else { printf("ERROR: unknown input. 1 for help\n");};
-    }*/
-    else { printf("ERROR: unknown input. 1 for help.\n");};
+    scanf(" %c",&input);
+    if (input=='x') { running=false;}
+    else if (input=='h') { printf("CODES HELP:\n  >x - exit\n  >h - help \(you are here.)\n  >r - render\n");}
+    else if (input=='r') {
+      bool rendering = true;
+      while (rendering) {
+        startup();
+        render();
+        printf("> r > ");
+        scanf(" %c",&input);
+        if (input=='x') { rendering=false;}
+        else if (input=='w') { thetaY-=3.14/32;}
+        else if (input=='s') { thetaY+=3.14/32;}
+        else if (input=='a') { thetaZ+=3.14/32;}
+        else if (input=='d') { thetaZ-=3.14/32;}
+        else { printf("ERROR: unknown input. >h for help.\n");};
+      };
+    } else { printf("ERROR: unknown input. >h for help.\n");};
   };
   return 0;
 };
