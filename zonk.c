@@ -25,7 +25,7 @@ struct Tri3 {
 char* MATRIX;
 char* UI;
 struct Point3 CAM = {0,0,0};
-float thetaY = 0.25;
+float thetaY = 0.1;
 float thetaZ = 0;
 float radius = 100;
 float MATRIXdist = 16;
@@ -140,8 +140,14 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //struct Point3 d[3]; d->x = B->x - A->x; d->y = B->y - A->y; d->z = B->z - A->z;
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
-  value = (100-B->z)/100;
-  if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
+  //value = (100-B->z)/100;
+  if (B->x > 0) {
+    if (B->y > 0) { value=0.07;} else { value=1.0;};
+  } else {
+    if (B->y > 0) { value=0.33;} else { value=0.66;};
+  };
+  
+  //if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
   
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
@@ -163,15 +169,12 @@ void  castNet(){
       // 2. Apply Matrix Transform
       pxTarget.x = matrixTransform(pxTarget.x,'x');
       pxTarget.y = matrixTransform(pxTarget.y,'y');
-
-      float stepTwoTargetX = pxTarget.x;
-      float stepTwoTargetY = pxTarget.y;
         //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
       
       // 3. Rotate {x,y} with thetaY
-      pxTarget.x = polBin(pxTarget.x)*radius*cos(acos(polBin(pxTarget.x)*pxTarget.x/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
+      //pxTarget.x = polBin(pxTarget.x)*radius*cos(acos(polBin(pxTarget.x)*pxTarget.x/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
       pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
-        printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
+        //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
       
       /*  4. Rotate {x,z} with thetaZ
       pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
@@ -237,7 +240,7 @@ void  castNet(){
       spherePoint.x+=CAM.x;
       spherePoint.y+=CAM.y;
       spherePoint.z+=CAM.z;
-      if (spherePoint.z==0) { printf("9. stepTwoTargetX,Y: [%f,%f]  xTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",stepTwoTargetX,stepTwoTargetY,pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
+      //if (spherePoint.z==0) { printf("9. stepTwoTargetX,Y: [%f,%f]  xTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",stepTwoTargetX,stepTwoTargetY,pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
       // 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
