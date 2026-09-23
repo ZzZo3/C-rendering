@@ -6,7 +6,7 @@
 
 #define yDim /*65*/115
 #define xDim /*211*/375
-#define gradL 13
+#define gradL 14
 
 /*-----------------> UTIL <-----------------*/
 
@@ -25,7 +25,7 @@ struct Tri3 {
 char* MATRIX;
 char* UI;
 struct Point3 CAM = {0,0,0};
-float thetaY = 0;
+float thetaY = 0.25;
 float thetaZ = 0;
 float radius = 100;
 float MATRIXdist = 16;
@@ -38,6 +38,11 @@ int pol(float v) {
   return 0;
 };
 
+int polBin(float v) {
+  if (v<0) { return -1;};
+  return 1;
+};
+
 void termLine() {
   for (int i=0; i<xDim+2; i++) {
     printf("-");
@@ -45,7 +50,7 @@ void termLine() {
   printf("\n");
 };
 
-char grad[14] = " .-,:~+=so$%W@";
+char grad[gradL] = " .,:~>+=so$%W@";
 //char grad1[8] = "⠂⠢⠪⡪⡺⣫⣻⣿";
 
 //typedef int bool; bool false = 0, true = 1;
@@ -136,10 +141,10 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
   value = (100-B->z)/100;
-  if ((int)round(fabs(B->x))%10<2 || (int)round(fabs(B->y))%10<2 || (int)round(fabs(B->z))%10<1) { value+=0.2;value*=2;};
+  if (fmodf(fabs(B->x),10)<2 || fmodf(fabs(B->y),10)<2 || fmodf(fabs(B->z),10)<1.25) { value+=0.15;value*=2;};
   
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
-  int normValue = round(value*gradL);
+  int normValue = round(value*(gradL-2)+1);
   if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
   MATRIX[px->y*xDim+px->x] = grad[normValue];
 };
@@ -163,12 +168,12 @@ void  castNet(){
       float stepTwoTargetY = pxTarget.y;
         //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
       
-      /* 3. Rotate {x,y} with thetaY
-      pxTarget.x = radius*cos(acos((pxNorm.x+radius/radius)%(float)2-1)+thetaY);
-      pxTarget.y = radius*sin(asin((pxNorm.y+radius/radius)%(float)2-1)+thetaY);
+      // 3. Rotate {x,y} with thetaY
+      pxTarget.x = polBin(pxTarget.x)*radius*cos(acos(polBin(pxTarget.x)*pxTarget.x/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
+      pxTarget.y = polBin(pxTarget.y)*radius*sin(asin(polBin(pxTarget.y)*pxTarget.y/radius) + thetaY*polBin(pxTarget.x)*polBin(pxTarget.y));
         printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
       
-      //  4. Rotate {x,z} with thetaZ
+      /*  4. Rotate {x,z} with thetaZ
       pxTarget.x = radius*cos(acos((pxTarget.x+radius/radius)%(float)2-1)+thetaZ);
       pxTarget.z = radius*sin(asin((pxNorm.z+radius/radius)%(float)2-1)+thetaZ);
         printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);*/
@@ -252,7 +257,7 @@ void buildScene() {
 
 void buildUI() {
   printf("building UI...\n");
-  struct Point pA = {100,30};
+  /*struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
   struct Point pD = {120,30};
@@ -272,13 +277,13 @@ void buildUI() {
   drawLine(UI,&pA,&pB,'.');drawLine(UI,&pA,&pC,'.');drawLine(UI,&pA,&pD,'.');drawLine(UI,&pA,&pE,'.');
   drawLine(UI,&pA,&pF,'.');drawLine(UI,&pA,&pG,'.');drawLine(UI,&pA,&pH,'.');drawLine(UI,&pA,&pI,'.');
   drawLine(UI,&pA,&pJ,'.');drawLine(UI,&pA,&pK,'.');drawLine(UI,&pA,&pL,'.');drawLine(UI,&pA,&pM,'.');
-  drawLine(UI,&pA,&pN,'.');drawLine(UI,&pA,&pO,'.');drawLine(UI,&pA,&pP,'.');drawLine(UI,&pA,&pQ,'.');
+  drawLine(UI,&pA,&pN,'.');drawLine(UI,&pA,&pO,'.');drawLine(UI,&pA,&pP,'.');drawLine(UI,&pA,&pQ,'.');*/
   struct Point pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
   struct Point pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
   struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
   drawPoint(UI, &pUIa,'\\');drawPoint(UI, &pUIb,'|');drawPoint(UI, &pUIc,'/');
   drawPoint(UI, &pUId,'-');drawPoint(UI, &pUIe,'-');
-  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');/
+  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');
 };
 
 /*-----------------> PROG <-----------------*/
