@@ -5,7 +5,7 @@
 
 /*-----------------> CONSTANTS <-----------------*/
 
-#define yDim /*65*/  115
+#define yDim /*65*/  117
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
@@ -154,8 +154,8 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
   float dAbs = sqrt(d.x*d.x+d.y*d.y+d.z*d.z);
-  value = (d.x+d.y)/radius; if (value<0) { value=0;};
-  if (fmodf(fabs(B->x),10)<1.67 || fmodf(fabs(B->y),10)<1.67 || fmodf(fabs(B->z),10)<1.67) { value+=0.15;value*=2;};
+  value = fabs((d.x+d.y)/(sqrt(3)*radius));
+  if (fmodf(fabs(B->x),10)<1.33 || fmodf(fabs(B->y),10)<1.33 || fmodf(fabs(B->z),10)<1.33) { value+=0.15;value*=2;};
     //printf("d: {%f,%f,%f} -> %f -> %f\n",d.x,d.y,d.z,dAbs,value);
 
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
