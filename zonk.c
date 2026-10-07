@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 /*-----------------> CONSTANTS <-----------------*/
 
 #define yDim /*65*/  115
 #define xDim /*211*/ 375
 #define gradL 14
+#define MAXINPUT 64
 
 /*-----------------> UTIL <-----------------*/
 
@@ -25,10 +27,10 @@ struct Tri3 {
 char* MATRIX;
 char* UI;
 struct Point3 CAM = {0,0,0};
-float thetaY = 0;
-float thetaZ = 0;
+float thetaXr = 0;
+float thetaYr = 0;
 float radius = 100;
-float MATRIXdist = 12;
+float MATRIXdist = 4;
 float yScale = 0.10;
 float xScale = 0.061;
 
@@ -50,18 +52,30 @@ void termLine() {
   printf("\n");
 };
 
-char grad[gradL] = " .,:~>+=so$%W@";
+char grad[gradL] = " .,:~>+=so$W%@";
 //char grad1[8] = "⠂⠢⠪⡪⡺⣫⣻⣿";
 
 //typedef int bool; bool false = 0, true = 1;
+
+void multiplyMatrix(float m1[1][3], float m2[3][3]) {
+  float result[1][3];
+  for (int colR=0; colR<3; colR++) {
+    result [0][colR] = 0;
+    for (int i=0; i<3; i++) { result [0][colR] += m1[0][i]*m2[i][colR];};
+  };
+
+  for (int i=0; i<3; i++) {
+    m1[0][i] = result [0][i];
+  };
+};
 
 /*-----------------> MATRIX <-----------------*/
 
 void drawPoint(char* ARRAY, struct Point *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
 
-//
+
 void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) {
-  printf(" drawing Line...\n");
+  //printf(" drawing Line...\n");
   // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
   bool vert = aTemp->x == bTemp->x, horz = aTemp->y == bTemp->y;
@@ -88,7 +102,7 @@ void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) 
 };
 
 void printMATRIX() {
-  printf(" drawing MATRIX...\n");
+  //printf(" drawing MATRIX...\n");
   termLine();
   for(int yi=0; yi<yDim; yi++) {
     printf("|");
@@ -105,12 +119,12 @@ void printMATRIX() {
 };
 
 void clearMATRIX() {
-  printf(" clearing MATRIX...\n");
+  //printf(" clearing MATRIX...\n");
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { MATRIX[y*xDim+x] = ' ';};};
 };
 
 void clearUI() {
-  printf(" clearing UI...\n");
+  //printf(" clearing UI...\n");
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { UI[y*xDim+x] = ' ';};};
 };
 
@@ -119,16 +133,14 @@ void clearUI() {
 struct Tri3 TRIANGLES[10];
 
 float matrixTransform(float p, char axis) {
-  /*if (p==0) { return 0;}
+  if (p==0) { return 0;}
   if (axis=='x') {
-      //printf("p: %f->",p);
     p += (2*p*p*p)/(fabs(p)*xDim);
     p /= 3;
-      //printf("->%f\n",p);
   } else if (axis=='y') {
     p += (2*p*p*p)/(fabs(p)*xDim);
     p /= -3;
-  };*/
+  };
   return p;
 };
 
@@ -141,17 +153,8 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
   
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
-  //value = (100-B->z)/100;
-  /*if (B->x > 0) {
-    if (B->y > 0) { value=0.07;} else { value=0.8;};
-  } else {
-    if (B->y > 0) { value=0.33;} else { value=0.66;};
-  };
-  //if (B->z < 0) { value=0.0;};
-  */
-
   float dAbs = sqrt(d.x*d.x+d.y*d.y+d.z*d.z);
-  value = (radius-dAbs)/radius;
+  value = (d.x+d.y)/radius; if (value<0) { value=0;};
   if (fmodf(fabs(B->x),10)<1.67 || fmodf(fabs(B->y),10)<1.67 || fmodf(fabs(B->z),10)<1.67) { value+=0.15;value*=2;};
     //printf("d: {%f,%f,%f} -> %f -> %f\n",d.x,d.y,d.z,dAbs,value);
 
@@ -162,8 +165,8 @@ void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
 };
 
 void  castNet(){
-  printf(" casting Net...\n");
-  printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
+   //printf(" casting Net...\n");
+   //printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
       // 0. Define px for later
@@ -175,24 +178,11 @@ void  castNet(){
       // 2. Apply Matrix Transform
       pxTarget.x = matrixTransform(pxTarget.x,'x');
       pxTarget.y = matrixTransform(pxTarget.y,'y');
-        //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);
-      
-      // 3. Rotate {y,z} with thetaY
-      // 3.0 Find new radius r1 in terms of x
-      float r1 = sqrt(radius*radius - pxTarget.x*pxTarget.x);
-      // 3.1
-      pxTarget.z = polBin(pxTarget.z)*r1*cos(acos(polBin(pxTarget.z)*pxTarget.z/r1) + thetaY*polBin(pxTarget.z));
-      pxTarget.y = polBin(pxTarget.y)*r1*sin(asin(polBin(pxTarget.y)*pxTarget.y/r1) + thetaY*polBin(pxTarget.y));
-        //printf("3. Rotate {x,y} with thetaY. pxTarget.x,y: %f,%f\n",pxTarget.x,pxTarget.y);
-      
-      // 4. Rotate {x,z} with thetaZ
-      // 4.0 Find new radius r2 in terms of y
-      float r2 = sqrt(radius*radius - pxTarget.y*pxTarget.y);
-      pxTarget.x = polBin(pxTarget.x)*r2*cos(acos(polBin(pxTarget.x)*pxTarget.x/r2) + thetaZ*polBin(pxTarget.x));
-      pxTarget.z = polBin(pxTarget.z)*r2*sin(asin(polBin(pxTarget.z)*pxTarget.z/r2) + thetaZ*polBin(pxTarget.z));
-        //printf("4. Rotate {x,z} with thetaZ. pxTarget.x,z: %f,%f\n",pxTarget.x,pxTarget.z);
+        //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z); 
+
 
       // 5 Get slopes from Line {0,0,0} -> pxTarget
+
       float tempF, dydx, dzdx;
       int caseX = 0;
       if (pxTarget.x!=0) {
@@ -217,13 +207,7 @@ void  castNet(){
       dzdx = pxTarget.z/pxTarget.x;
         //printf("5. dydx,dzdx: %f,%f\n",dydx,dzdx);
 
-      /* 6. Adjust pxTarget by CAM
-      pxTarget.x += CAM.x;
-      pxTarget.y += CAM.y;
-      pxTarget.z += CAM.z;
-        printf("6. Adjust pxTarget by CAM. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z);*/
-      
-      // 7. Extrude Ray to Sphere
+      // 6. Extrude Ray to Sphere
       struct Point3 spherePoint;
       float xSphereARR[2];
       xSphereARR[0] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1))/* + CAM.x*/;
@@ -233,8 +217,8 @@ void  castNet(){
       spherePoint.y = dydx*(spherePoint.x/* - CAM.x*/)/* + CAM.y*/;
       spherePoint.z = dzdx*(spherePoint.x/* - CAM.x*/)/* + CAM.z*/;
         //printf("7. Extrude Ray to Sphere: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);
-      
-      // 8. Translate backwards {x,y,z}
+
+      // 7. Translate backwards {x,y,z}
       if (caseX==0) {
         // no swaps
       } else if (caseX==1) { // swap x->y
@@ -248,10 +232,19 @@ void  castNet(){
         spherePoint.x = tempF;
           //printf("8. Swapped z,x\n");
       }
-      spherePoint.x+=CAM.x;
-      spherePoint.y+=CAM.y;
-      spherePoint.z+=CAM.z;
-      //if (spherePoint.z==0) { printf("9. stepTwoTargetX,Y: [%f,%f]  xTarget: {%f,%f,%f} spherePoint: {%f,%f,%f}\n",stepTwoTargetX,stepTwoTargetY,pxTarget.x,pxTarget.y,pxTarget.z,spherePoint.x,spherePoint.y,spherePoint.z);};
+      
+      // 8. MATRIX MULTIPLICATION FOR ROTATION:
+      float targetPointMatrix[1][3] = {{spherePoint.x,spherePoint.y,spherePoint.z}};
+        // 8.1 Rotate about x-axis 
+      float revolveXMatrix[3][3] = {{1,0,0},{0,cos(thetaXr),-sin(thetaXr)},{0,sin(thetaXr),cos(thetaXr)}};
+      multiplyMatrix(targetPointMatrix,revolveXMatrix);
+        // 8.2 Rotate about y-axis
+      float revolveYMatrix[3][3] = {{cos(thetaYr),0,sin(thetaYr)},{0,1,0},{-sin(thetaYr),0,cos(thetaYr)}};
+      multiplyMatrix(targetPointMatrix,revolveYMatrix);
+        // 8.3 Return values to pxTarget
+      spherePoint.x = targetPointMatrix[0][0]+CAM.x;
+      spherePoint.y = targetPointMatrix[0][1]+CAM.y;
+      spherePoint.z = targetPointMatrix[0][2]+CAM.z;
       // 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
@@ -261,7 +254,7 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  printf("building Scene...\n");
+  //printf("building Scene...\n");
   struct Point3 p3A = {65,-30,-60};
   struct Point3 p3B = {65,-30,60};
   struct Point3 p3C = {80,60,0};
@@ -270,7 +263,7 @@ void buildScene() {
 };
 
 void buildUI() {
-  printf("building UI...\n");
+  //printf("building UI...\n");
   /*struct Point pA = {100,30};
   struct Point pB = {100,10};
   struct Point pC = {120,20};
@@ -303,18 +296,38 @@ void buildUI() {
 /*-----------------> PROG <-----------------*/
 
 void startup() {
-  termLine();
-  printf("startup()\n");
+  //termLine();
+  //printf("startup()\n");
   clearMATRIX();
   clearUI();
 };
 
 void render() {
-  printf("render()\n");
+  //printf("render()\n");
   buildScene();
   castNet();
   buildUI();
   printMATRIX();
+};
+
+void lookU(float by) { thetaXr+=by;startup();render();};
+void lookL(float by) { thetaYr+=by;startup();render();};
+
+int parse(char command[]) {
+  if (command[0]=='x') { return 1;};
+  if (command[0]=='w') { return 2;};
+  if (command[0]=='s') { return 3;};
+  if (command[0]=='a') { return 4;};
+  if (command[0]=='d') { return 5;};
+  return 0;
+};
+
+void run(int code) {
+  if (code==2) {lookU(-3.1415/32);}
+  else if (code==3) {lookU(3.1415/32);}
+  else if (code==4) {lookL(3.1415/32);}
+  else if (code==5) {lookL(-3.1415/32);};
+  return;
 };
 
 /*-----------------> MAIN <-----------------*/
@@ -326,27 +339,48 @@ int main() {
   render();
   bool running = true;
   while (running) {
-    char input = ' ';
-    //float infloat = 0;
+    char input[MAXINPUT];
     printf("> ");
-    scanf(" %c",&input);
-    if (input=='x') { running=false;}
-    else if (input=='h') { printf("CODES HELP:\n  >x - exit\n  >h - help \(you are here.)\n  >r - render\n");}
-    else if (input=='r') {
-      bool rendering = true;
-      while (rendering) {
-        startup();
-        render();
-        printf("> r > ");
-        scanf(" %c",&input);
-        if (input=='x') { rendering=false;}
-        else if (input=='w') { thetaY-=3.14/32;}
-        else if (input=='s') { thetaY+=3.14/32;}
-        else if (input=='a') { thetaZ+=3.14/32;}
-        else if (input=='d') { thetaZ-=3.14/32;}
-        else { printf("ERROR: unknown input. >h for help.\n");};
+    scanf(" %[^\n]",input);
+     //printf("  input length: %i  ",strlen(input));
+    int commandSeparateIndexes[MAXINPUT];
+    int commandCount=0;
+    for (int i=0; i<strlen(input); i++){ if (input[i]==' ') {
+      commandSeparateIndexes[commandCount]=i;
+      commandCount++;
+    } else { commandSeparateIndexes[i]=0;};};
+    int parseCursorA=0, parseCursorB=0;
+    
+    
+    int runs=1;
+     /*printf("commandCount: %d  commandSeparationIndexes: { ",commandCount);
+     for (int i=0; i<commandCount; i++) { printf("%d ",commandSeparateIndexes[i]);};
+     printf("}\n");*/
+
+    for (int i=0; i<commandCount; i++) {
+      while (parseCursorB<=commandSeparateIndexes[i]) { parseCursorB++;};
+
+      int length = parseCursorB - parseCursorA - 1;
+      char command[MAXINPUT];
+      strncpy(command, input+parseCursorA, length);
+      command[length] = '\0';
+        //printf("command: \"%s\"\n",command);
+      char *endPtr;
+      long int num;
+      num = strtol(command, &endPtr, 10);
+      if (endPtr!=command || *endPtr=='\0') { runs=num;};
+        //printf("RUNS: %d\n",runs);
+      int code = parse(command);
+        //printf("code: %d\n",code);
+      if (code==1) { running=false;}
+      else if (code!=0) { 
+        for (int runi=0; runi<runs; runi++) { run(code);};
+        runs = 1;
       };
-    } else { printf("ERROR: unknown input. >h for help.\n");};
+
+      parseCursorA = parseCursorB;
+    };
+
   };
   return 0;
 };
