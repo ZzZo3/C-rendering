@@ -21,19 +21,19 @@
 
 /*-----------------> UTIL <-----------------*/
 
-struct Point {
+struct scnSpcPt {
   int x,y;
 };
 
-typedef float p3[1][3];
-typedef float p3Trns[3][3];
+typedef float Pt3[1][3];
+typedef float Pt3Trns[3][3];
 
 struct Point3 {
   float x,y,z;
 };
 
 struct Tri3 {
-  p3 a,b,c;
+  Pt3 a,b,c;
 };
 
 char* tmlScnSpcA; // screenspace
@@ -69,7 +69,7 @@ char grad[gradL] = " .,:~>+=so$W%@";
 
 //typedef int bool; bool false = 0, true = 1;
 
-void multplyM33xM31(p3 M31, p3Trns M33) {
+void multplyM33xM31(Pt3 M31, Pt3Trns M33) {
   float result[1][3];
   for (int colR=0; colR<3; colR++) {
     result [0][colR] = 0;
@@ -83,31 +83,31 @@ void multplyM33xM31(p3 M31, p3Trns M33) {
 
 /*-----------------> MATRIX <-----------------*/
 
-void drawPoint(char* ARRAY, struct Point *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
+void drawPoint(char* ARRAY, struct scnSpcPt *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
 
 
-void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) {
+void drawLine(char* ARRAY, struct scnSpcPt *aTemp, struct scnSpcPt *bTemp, char fill) {
   //printf(" drawing Line...\n");
   // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
   bool vert = aTemp->x == bTemp->x, horz = aTemp->y == bTemp->y;
   bool shallow = ( fabs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
   // a<->b
-  struct Point a, b;
+  struct scnSpcPt a, b;
   if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) ) { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;};
   // draw
   if (shallow) {
     for (int xi=a.x; xi<=b.x; xi++) {
       float m = ((float)b.y-a.y)/(b.x-a.x);
       float y = m * (xi - a.x) + a.y;
-      struct Point pTemp = {xi,y+0.5};
+      struct scnSpcPt pTemp = {xi,y+0.5};
       drawPoint(ARRAY,&pTemp,fill);
     };
   } else {
     for (int yi=a.y; yi<=b.y; yi++) {
       float m = ((float)b.x-a.x)/(b.y-a.y);
       float x = m * (yi-a.y) + a.x;
-      struct Point pTemp = {x+0.5,yi};
+      struct scnSpcPt pTemp = {x+0.5,yi};
       drawPoint(ARRAY,&pTemp,fill);
     };
   };
@@ -129,12 +129,8 @@ void printTml() {
   termLine();
 };
 
-void clearMATRIX() {
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcA[y*xDim+x] = ' ';};};
-};
-
-void clearUI() {
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcB[y*xDim+x] = ' ';};};
+void emptyTmlScnSpc() {
+  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcA[y*xDim+x]=' '; tmlScnSpcB[y*xDim+x]=' ';};};
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -153,7 +149,7 @@ float scnSpcTrns(float p, char axis) {
   return p;
 };
 
-void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
+void castRay(struct Point3 *A, struct Point3 *B, struct scnSpcPt *px) {
   float value = 0.0;
   
   struct Point3 d; d.x = B->x - A->x; d.y = B->y - A->y; d.z = B->z - A->z;
@@ -174,7 +170,7 @@ void  castNet(){
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
 // 0. Define px for later
-      struct Point px = {xi,yi};
+      struct scnSpcPt px = {xi,yi};
 // 1. Normalize pixel as pxNorm
       struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),pseuFOV};
 // 2. Apply Matrix Transform
@@ -182,9 +178,9 @@ void  castNet(){
       pxTarget.y = scnSpcTrns(pxTarget.y,'y');
 // 5. Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
-      p3 p3Dummy = {{pxTarget.x,pxTarget.y,pxTarget.z}};
-      p3Trns xySwpMtrx = {{0,1,0},{1,0,0},{0,0,1}};
-      p3Trns xzSwpMtrx = {{0,0,1},{0,1,0},{1,0,0}};
+      Pt3 p3Dummy = {{pxTarget.x,pxTarget.y,pxTarget.z}};
+      Pt3Trns xySwpMtrx = {{0,1,0},{1,0,0},{0,0,1}};
+      Pt3Trns xzSwpMtrx = {{0,0,1},{0,1,0},{1,0,0}};
       int caseX = 0;
       if (pxTarget.x==0) {
         if (pxTarget.y!=0) { // swap x->y
@@ -224,8 +220,8 @@ void  castNet(){
       }
 // 8. MATRIX ROTATION:
  // 0. Setup
-      p3Trns pitchMtrx = {{1,0,0},{0,cos(pitch),-sin(pitch)},{0,sin(pitch),cos(pitch)}};
-      p3Trns yawMtrx = {{cos(yaw),0,sin(yaw)},{0,1,0},{-sin(yaw),0,cos(yaw)}};
+      Pt3Trns pitchMtrx = {{1,0,0},{0,cos(pitch),-sin(pitch)},{0,sin(pitch),cos(pitch)}};
+      Pt3Trns yawMtrx = {{cos(yaw),0,sin(yaw)},{0,1,0},{-sin(yaw),0,cos(yaw)}};
  // 1. Pitch, Yaw 
       multplyM33xM31(p3Dummy,pitchMtrx);
       multplyM33xM31(p3Dummy,yawMtrx);
@@ -250,9 +246,9 @@ void buildScene() {
 };
 
 void buildUI() {
-  struct Point pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
-  struct Point pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
-  struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
+  struct scnSpcPt pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
+  struct scnSpcPt pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
+  struct scnSpcPt pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
   drawPoint(tmlScnSpcB, &pUIa,'\\');drawPoint(tmlScnSpcB, &pUIb,'|');drawPoint(tmlScnSpcB, &pUIc,'/');
   drawPoint(tmlScnSpcB, &pUId,'-');drawPoint(tmlScnSpcB, &pUIe,'-');
   drawPoint(tmlScnSpcB, &pUIf,'/');drawPoint(tmlScnSpcB, &pUIg,'|');drawPoint(tmlScnSpcB, &pUIh,'\\');
@@ -261,8 +257,7 @@ void buildUI() {
 /*-----------------> PROG <-----------------*/
 
 void startup() {
-  clearMATRIX();
-  clearUI();
+  emptyTmlScnSpc();
 };
 
 void render() {
