@@ -45,6 +45,7 @@ float radius = 100; // render distance
 float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
 float yScale = 0.10; // [0..1] coef for dimensions of screenspace
 float xScale = 0.061;
+char grad[gradL] = " .,:~>+=so$W%@";
 
 int pol(float v) {
   if (v>0) { return 1;};
@@ -64,10 +65,6 @@ void termLine() {
   printf("\n");
 };
 
-char grad[gradL] = " .,:~>+=so$W%@";
-//char grad1[8] = "⠂⠢⠪⡪⡺⣫⣻⣿";
-
-//typedef int bool; bool false = 0, true = 1;
 
 void multplyM33xM31(Pt3 M31, Pt3Trns M33) {
   float result[1][3];
@@ -87,15 +84,11 @@ void drawPoint(char* ARRAY, struct scnSpcPt *p, char fill) { ARRAY[p->y*xDim+p->
 
 
 void drawLine(char* ARRAY, struct scnSpcPt *aTemp, struct scnSpcPt *bTemp, char fill) {
-  //printf(" drawing Line...\n");
-  // conditions
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
   bool vert = aTemp->x == bTemp->x, horz = aTemp->y == bTemp->y;
   bool shallow = ( fabs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
-  // a<->b
   struct scnSpcPt a, b;
   if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) ) { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;};
-  // draw
   if (shallow) {
     for (int xi=a.x; xi<=b.x; xi++) {
       float m = ((float)b.y-a.y)/(b.x-a.x);
