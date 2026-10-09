@@ -3,6 +3,15 @@
 #include <math.h>
 #include <string.h>
 
+/*-----------------> NOTICE <-----------------*/
+/*
+  A MATRIX SHALL BE DEFINED AND REFERENCED WITH "M[column][row]". -> float M[3][3] = {{1,4,7},{2,5,8},{3,6,9}};
+  A POINT 2 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 2 COLUMNS.  -> float P2[1][2] = {{x,y}};
+  A POINT 3 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 3 COLUMNS.  -> float P3[1][3] = {{x,y,z}};
+      |1 2 3|        |x|        |x|
+  M = |4 5 6| ; P2 = |y| ; P3 = |y|
+      |7 8 9|                   |z|
+*/
 /*-----------------> CONSTANTS <-----------------*/
 
 #define yDim /*65*/  117
@@ -16,22 +25,25 @@ struct Point {
   int x,y;
 };
 
+typedef float p3[1][3];
+typedef float p3Trns[3][3];
+
 struct Point3 {
   float x,y,z;
 };
 
 struct Tri3 {
-  struct Point3 a,b,c;
+  p3 a,b,c;
 };
 
-char* MATRIX;
-char* UI;
+char* tmlScnSpcA; // screenspace
+char* tmlScnSpcB; // UI layer
 struct Point3 CAM = {0,0,0};
-float thetaXr = 0;
-float thetaYr = 0;
-float radius = 100;
-float MATRIXdist = 4;
-float yScale = 0.10;
+float pitch = 0; // Radians
+float yaw = 0;
+float radius = 100; // render distance
+float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
+float yScale = 0.10; // [0..1] coef for dimensions of screenspace
 float xScale = 0.061;
 
 int pol(float v) {
@@ -57,15 +69,15 @@ char grad[gradL] = " .,:~>+=so$W%@";
 
 //typedef int bool; bool false = 0, true = 1;
 
-void multiplyMatrix(float m1[1][3], float m2[3][3]) {
+void multplyM33xM31(p3 M31, p3Trns M33) {
   float result[1][3];
   for (int colR=0; colR<3; colR++) {
     result [0][colR] = 0;
-    for (int i=0; i<3; i++) { result [0][colR] += m1[0][i]*m2[i][colR];};
+    for (int i=0; i<3; i++) { result [0][colR] += M31[0][i]*M33[i][colR];};
   };
 
   for (int i=0; i<3; i++) {
-    m1[0][i] = result [0][i];
+    M31[0][i] = result [0][i];
   };
 };
 
@@ -101,16 +113,15 @@ void drawLine(char* ARRAY, struct Point *aTemp, struct Point *bTemp, char fill) 
   };
 };
 
-void printMATRIX() {
-  //printf(" drawing MATRIX...\n");
+void printTml() {
   termLine();
   for(int yi=0; yi<yDim; yi++) {
     printf("|");
     for (int xi=0; xi<xDim; xi++) {
-      if (UI[yi*xDim+xi]==' ') {
-        printf("%c",MATRIX[yi*xDim+xi]);
+      if (tmlScnSpcB[yi*xDim+xi]==' ') {
+        printf("%c",tmlScnSpcA[yi*xDim+xi]);
       } else {
-        printf("%c",UI[yi*xDim+xi]);
+        printf("%c",tmlScnSpcB[yi*xDim+xi]);
       };
     };
     printf("|\n");
@@ -119,133 +130,110 @@ void printMATRIX() {
 };
 
 void clearMATRIX() {
-  //printf(" clearing MATRIX...\n");
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { MATRIX[y*xDim+x] = ' ';};};
+  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcA[y*xDim+x] = ' ';};};
 };
 
 void clearUI() {
-  //printf(" clearing UI...\n");
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { UI[y*xDim+x] = ' ';};};
+  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcB[y*xDim+x] = ' ';};};
 };
 
 /*-----------------> SCENE <-----------------*/
 
 struct Tri3 TRIANGLES[10];
 
-float matrixTransform(float p, char axis) {
+float scnSpcTrns(float p, char axis) {
   if (p==0) { return 0;}
   if (axis=='x') {
-    p += (2*p*p*p)/(fabs(p)*xDim);
+    p += (2*pow(p,3))/(fabs(p)*xDim);
     p /= 3;
   } else if (axis=='y') {
-    p += (2*p*p*p)/(fabs(p)*xDim);
+    p += (2*pow(p,3))/(fabs(p)*xDim);
     p /= -3;
   };
   return p;
 };
 
 void castRay(struct Point3 *A, struct Point3 *B, struct Point *px) {
-    //printf(" casting ray...\n");
-    //printf("  px: {%d,%d},  A: {%f,%f,%f}, B: {%f,%f,%f}",px->x,px->y,A->x,A->y,A->z,B->x,B->y,B->z);
   float value = 0.0;
   
   struct Point3 d; d.x = B->x - A->x; d.y = B->y - A->y; d.z = B->z - A->z;
   
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
   
-  float dAbs = sqrt(d.x*d.x+d.y*d.y+d.z*d.z);
+  float dAbs = sqrt(pow(d.x,2)+pow(d.y,2)+pow(d.z,2));
   value = fabs((d.x+d.y)/(sqrt(3)*radius));
   if (fmodf(fabs(B->x),10)<1.33 || fmodf(fabs(B->y),10)<1.33 || fmodf(fabs(B->z),10)<1.33) { value+=0.15;value*=2;};
-    //printf("d: {%f,%f,%f} -> %f -> %f\n",d.x,d.y,d.z,dAbs,value);
 
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
   if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
-  MATRIX[px->y*xDim+px->x] = grad[normValue];
+  tmlScnSpcA[px->y*xDim+px->x] = grad[normValue];
 };
 
 void  castNet(){
-   //printf(" casting Net...\n");
-   //printf("  MATRIX dimensions: [xDim,yDim]  CAM: {%f,%f,%f}  radius: %f  MATRIXdist: %f  xScale,yScale: %f,%f\n", CAM.x,CAM.y,CAM.z, radius, MATRIXdist,xScale,yScale);
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
-      // 0. Define px for later
+// 0. Define px for later
       struct Point px = {xi,yi};
-        //printf("0. px: {%d,%d}\n",xi,yi);
-      // 1. Normalize pixel as pxNorm
-      struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),MATRIXdist};
-      
-      // 2. Apply Matrix Transform
-      pxTarget.x = matrixTransform(pxTarget.x,'x');
-      pxTarget.y = matrixTransform(pxTarget.y,'y');
-        //printf("1. pxTarget: {%f,%f,%f}\n",pxTarget.x,pxTarget.y,pxTarget.z); 
-
-
-      // 5 Get slopes from Line {0,0,0} -> pxTarget
-
+// 1. Normalize pixel as pxNorm
+      struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),pseuFOV};
+// 2. Apply Matrix Transform
+      pxTarget.x = scnSpcTrns(pxTarget.x,'x');
+      pxTarget.y = scnSpcTrns(pxTarget.y,'y');
+// 5. Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
+      p3 p3Dummy = {{pxTarget.x,pxTarget.y,pxTarget.z}};
+      p3Trns xySwpMtrx = {{0,1,0},{1,0,0},{0,0,1}};
+      p3Trns xzSwpMtrx = {{0,0,1},{0,1,0},{1,0,0}};
       int caseX = 0;
-      if (pxTarget.x!=0) {
-        // no swaps
-      } else if (pxTarget.y!=0) { // swap x->y
-        caseX = 1;
-        tempF = pxTarget.y;
-        pxTarget.y = pxTarget.x;
-        pxTarget.x = tempF;
-          //printf("5. Swapped x,y\n");
-      } else if (pxTarget.z!=0) { // swap x->z 
-        caseX = 2;
-        tempF = pxTarget.z;
-        pxTarget.z = pxTarget.x;
-        pxTarget.x = tempF;
-          //printf("5. Swapped x,z\n");
-      } else {
-        printf("FATAL ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
-        return;
+      if (pxTarget.x==0) {
+        if (pxTarget.y!=0) { // swap x->y
+          caseX = 1;
+          multplyM33xM31(p3Dummy,xySwpMtrx);
+        } else if (pxTarget.z!=0) { // swap x->z 
+          caseX = 2;
+          multplyM33xM31(p3Dummy,xzSwpMtrx);
+        } else {
+          printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
+          return;
+        };
       };
+      pxTarget.x = p3Dummy[0][0];
+      pxTarget.y = p3Dummy[0][1];
+      pxTarget.z = p3Dummy[0][2];
+//
       dydx = pxTarget.y/pxTarget.x;
       dzdx = pxTarget.z/pxTarget.x;
-        //printf("5. dydx,dzdx: %f,%f\n",dydx,dzdx);
-
-      // 6. Extrude Ray to Sphere
+// 6. Extrude Ray to Sphere
       struct Point3 spherePoint;
       float xSphereARR[2];
-      xSphereARR[0] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1))/* + CAM.x*/;
-      xSphereARR[1] = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1)) * -1/* + CAM.x*/;
-      if (pol(pxTarget.x/* - CAM.x*/)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
+      xSphereARR[0] = sqrt(radius*radius/(pow(dydx,2)+pow(dzdx,2)+1));
+      xSphereARR[1] = 0-xSphereARR[0];
+      if (pol(pxTarget.x)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
       else { spherePoint.x = xSphereARR[1];};
-      spherePoint.y = dydx*(spherePoint.x/* - CAM.x*/)/* + CAM.y*/;
-      spherePoint.z = dzdx*(spherePoint.x/* - CAM.x*/)/* + CAM.z*/;
-        //printf("7. Extrude Ray to Sphere: {%f,%f,%f}\n",spherePoint.x,spherePoint.y,spherePoint.z);
-
-      // 7. Translate backwards {x,y,z}
-      if (caseX==0) {
-        // no swaps
-      } else if (caseX==1) { // swap x->y
-        tempF = spherePoint.y;
-        spherePoint.y = spherePoint.x;
-        spherePoint.x = tempF;
-          //printf("8. Swapped y,x\n");
-      } else if (caseX==2) { // swap x->z 
-        tempF = spherePoint.z;
-        spherePoint.z = spherePoint.x;
-        spherePoint.x = tempF;
-          //printf("8. Swapped z,x\n");
+      spherePoint.y = dydx*(spherePoint.x);
+      spherePoint.z = dzdx*(spherePoint.x);
+// 7. Translate backwards {x,y,z}
+      p3Dummy[0][0] = spherePoint.x;
+      p3Dummy[0][1] = spherePoint.y;
+      p3Dummy[0][2] = spherePoint.z;
+      if (caseX==1) { // swap x->y
+        multplyM33xM31(p3Dummy,xySwpMtrx);
+      } else if (caseX==2) { // swap x->z
+        multplyM33xM31(p3Dummy,xzSwpMtrx); 
       }
-      
-      // 8. MATRIX MULTIPLICATION FOR ROTATION:
-      float targetPointMatrix[1][3] = {{spherePoint.x,spherePoint.y,spherePoint.z}};
-        // 8.1 Rotate about x-axis 
-      float revolveXMatrix[3][3] = {{1,0,0},{0,cos(thetaXr),-sin(thetaXr)},{0,sin(thetaXr),cos(thetaXr)}};
-      multiplyMatrix(targetPointMatrix,revolveXMatrix);
-        // 8.2 Rotate about y-axis
-      float revolveYMatrix[3][3] = {{cos(thetaYr),0,sin(thetaYr)},{0,1,0},{-sin(thetaYr),0,cos(thetaYr)}};
-      multiplyMatrix(targetPointMatrix,revolveYMatrix);
-        // 8.3 Return values to pxTarget
-      spherePoint.x = targetPointMatrix[0][0]+CAM.x;
-      spherePoint.y = targetPointMatrix[0][1]+CAM.y;
-      spherePoint.z = targetPointMatrix[0][2]+CAM.z;
-      // 9. Cast Ray
+// 8. MATRIX ROTATION:
+ // 0. Setup
+      p3Trns pitchMtrx = {{1,0,0},{0,cos(pitch),-sin(pitch)},{0,sin(pitch),cos(pitch)}};
+      p3Trns yawMtrx = {{cos(yaw),0,sin(yaw)},{0,1,0},{-sin(yaw),0,cos(yaw)}};
+ // 1. Pitch, Yaw 
+      multplyM33xM31(p3Dummy,pitchMtrx);
+      multplyM33xM31(p3Dummy,yawMtrx);
+ // 2. Return values to pxTarget
+      spherePoint.x = p3Dummy[0][0]+CAM.x;
+      spherePoint.y = p3Dummy[0][1]+CAM.y;
+      spherePoint.z = p3Dummy[0][2]+CAM.z;
+// 9. Cast Ray
       castRay(&CAM, &spherePoint, &px);
     };
   };
@@ -254,87 +242,61 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  //printf("building Scene...\n");
-  struct Point3 p3A = {65,-30,-60};
-  struct Point3 p3B = {65,-30,60};
-  struct Point3 p3C = {80,60,0};
-  struct Tri3 t3A = {p3A,p3B,p3C};
-  TRIANGLES[0] = t3A;
+  /*p3 p3A = {{65,-30,-60}};
+  p3 p3B = {{65,-30,60}};
+  p3 p3C = {{80,60,0}};
+  struct Tri3 TriangleA = {p3A,p3B,p3C};
+  TRIANGLES[0] = TriangleA;*/
 };
 
 void buildUI() {
-  //printf("building UI...\n");
-  /*struct Point pA = {100,30};
-  struct Point pB = {100,10};
-  struct Point pC = {120,20};
-  struct Point pD = {120,30};
-  struct Point pE = {120,40};
-  struct Point pF = {100,50};
-  struct Point pG = {80,40};
-  struct Point pH = {80,30};
-  struct Point pI = {80,20};
-  struct Point pJ = {90,10};
-  struct Point pK = {110,10};
-  struct Point pL = {110,50};
-  struct Point pM = {90,50};
-  struct Point pN = {85,15};
-  struct Point pO = {115,15};
-  struct Point pP = {115,45};
-  struct Point pQ = {85,45};
-  drawLine(UI,&pA,&pB,'.');drawLine(UI,&pA,&pC,'.');drawLine(UI,&pA,&pD,'.');drawLine(UI,&pA,&pE,'.');
-  drawLine(UI,&pA,&pF,'.');drawLine(UI,&pA,&pG,'.');drawLine(UI,&pA,&pH,'.');drawLine(UI,&pA,&pI,'.');
-  drawLine(UI,&pA,&pJ,'.');drawLine(UI,&pA,&pK,'.');drawLine(UI,&pA,&pL,'.');drawLine(UI,&pA,&pM,'.');
-  drawLine(UI,&pA,&pN,'.');drawLine(UI,&pA,&pO,'.');drawLine(UI,&pA,&pP,'.');drawLine(UI,&pA,&pQ,'.');*/
   struct Point pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
   struct Point pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
   struct Point pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
-  drawPoint(UI, &pUIa,'\\');drawPoint(UI, &pUIb,'|');drawPoint(UI, &pUIc,'/');
-  drawPoint(UI, &pUId,'-');drawPoint(UI, &pUIe,'-');
-  drawPoint(UI, &pUIf,'/');drawPoint(UI, &pUIg,'|');drawPoint(UI, &pUIh,'\\');
+  drawPoint(tmlScnSpcB, &pUIa,'\\');drawPoint(tmlScnSpcB, &pUIb,'|');drawPoint(tmlScnSpcB, &pUIc,'/');
+  drawPoint(tmlScnSpcB, &pUId,'-');drawPoint(tmlScnSpcB, &pUIe,'-');
+  drawPoint(tmlScnSpcB, &pUIf,'/');drawPoint(tmlScnSpcB, &pUIg,'|');drawPoint(tmlScnSpcB, &pUIh,'\\');
 };
 
 /*-----------------> PROG <-----------------*/
 
 void startup() {
-  //termLine();
-  //printf("startup()\n");
   clearMATRIX();
   clearUI();
 };
 
 void render() {
-  //printf("render()\n");
   buildScene();
   castNet();
   buildUI();
-  printMATRIX();
+  printTml();
 };
 
-void lookU(float by) { thetaXr+=by;startup();render();};
-void lookL(float by) { thetaYr+=by;startup();render();};
+void pitchUp(float by) { pitch+=by;startup();render();};
+void yawLeft(float by) { yaw+=by;startup();render();};
 
-int parse(char command[]) {
-  if (command[0]=='x') { return 1;};
-  if (command[0]=='w') { return 2;};
-  if (command[0]=='s') { return 3;};
-  if (command[0]=='a') { return 4;};
-  if (command[0]=='d') { return 5;};
+int parse(char cmd[]) {
+  if (cmd[0]=='x') { return 1;};
+  if (cmd[0]=='w') { return 2;};
+  if (cmd[0]=='s') { return 3;};
+  if (cmd[0]=='a') { return 4;};
+  if (cmd[0]=='d') { return 5;};
   return 0;
 };
 
 void run(int code) {
-  if (code==2) {lookU(-3.1415/32);}
-  else if (code==3) {lookU(3.1415/32);}
-  else if (code==4) {lookL(3.1415/32);}
-  else if (code==5) {lookL(-3.1415/32);};
+  if (code==2) {pitchUp(-3.1415/32);}
+  else if (code==3) {pitchUp(3.1415/32);}
+  else if (code==4) {yawLeft(3.1415/32);}
+  else if (code==5) {yawLeft(-3.1415/32);};
   return;
 };
 
 /*-----------------> MAIN <-----------------*/
 
 int main() {
-  MATRIX=(char*)malloc(xDim*yDim);
-  UI=(char*)malloc(xDim*yDim);
+  tmlScnSpcA=(char*)malloc(xDim*yDim);
+  tmlScnSpcB=(char*)malloc(xDim*yDim);
   startup();
   render();
   bool running = true;
@@ -342,7 +304,6 @@ int main() {
     char input[MAXINPUT];
     printf("> ");
     scanf(" %[^\n]",input);
-     //printf("  input length: %i  ",strlen(input));
     int commandSeparateIndexes[MAXINPUT];
     int commandCount=0;
     for (int i=0; i<strlen(input); i++){ if (input[i]==' ') {
@@ -350,37 +311,26 @@ int main() {
       commandCount++;
     } else { commandSeparateIndexes[i]=0;};};
     int parseCursorA=0, parseCursorB=0;
-    
-    
     int runs=1;
-     /*printf("commandCount: %d  commandSeparationIndexes: { ",commandCount);
-     for (int i=0; i<commandCount; i++) { printf("%d ",commandSeparateIndexes[i]);};
-     printf("}\n");*/
-
+// parse commands in line
     for (int i=0; i<commandCount; i++) {
       while (parseCursorB<=commandSeparateIndexes[i]) { parseCursorB++;};
-
       int length = parseCursorB - parseCursorA - 1;
       char command[MAXINPUT];
       strncpy(command, input+parseCursorA, length);
       command[length] = '\0';
-        //printf("command: \"%s\"\n",command);
       char *endPtr;
       long int num;
       num = strtol(command, &endPtr, 10);
       if (endPtr!=command || *endPtr=='\0') { runs=num;};
-        //printf("RUNS: %d\n",runs);
       int code = parse(command);
-        //printf("code: %d\n",code);
       if (code==1) { running=false;}
       else if (code!=0) { 
         for (int runi=0; runi<runs; runi++) { run(code);};
         runs = 1;
       };
-
       parseCursorA = parseCursorB;
     };
-
   };
   return 0;
 };
