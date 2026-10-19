@@ -25,7 +25,7 @@ struct scnSpcPt {
   int x,y;
 };
 
-typedef float Pt3[1][3];
+typedef float Pt3[3];
 typedef float Pt3Trns[3][3];
 
 struct Point3 {
@@ -66,16 +66,28 @@ void termLine() {
 };
 
 
-void multplyM33xM31(Pt3 M31, Pt3Trns M33) {
-  float result[1][3];
+void applyMtrxPt3(Pt3 M31, Pt3Trns M33) {
+  Pt3 result;
   for (int colR=0; colR<3; colR++) {
-    result [0][colR] = 0;
-    for (int i=0; i<3; i++) { result [0][colR] += M31[0][i]*M33[i][colR];};
+    result[colR] = 0;
+    for (int i=0; i<3; i++) { result[colR] += M31[i]*M33[i][colR];};
   };
 
   for (int i=0; i<3; i++) {
-    M31[0][i] = result [0][i];
+    M31[i] = result[i];
   };
+};
+
+float dot(Pt3 A, Pt3 B) {
+  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2])/(sqrt(pow(A[0],2)+pow(A[1],2)+pow(A[2],2))*sqrt(pow(B[0],2)+pow(B[1],2)+pow(B[2],2)));
+};
+
+Pt3 cross(Pt3 A, Pt3 B) {
+  Pt3 C;
+  C[0] = A[1]*B[2]-A[2]*B[1];
+  C[1] = A[2]*B[0]-A[0]*B[2];
+  C[2] = A[0]*B[1]-A[1]*B[0];
+  return C;
 };
 
 /*-----------------> MATRIX <-----------------*/
@@ -130,20 +142,30 @@ void emptyTmlScnSpc() {
 
 struct Tri3 TRIANGLES[10];
 
-void castRay(struct Point3 *A, struct Point3 *B, struct scnSpcPt *px) {
-  float value = 0.0;
-  
-  struct Point3 d; d.x = B->x - A->x; d.y = B->y - A->y; d.z = B->z - A->z;
+void castRay(struct Point3 *B, struct scnSpcPt *px) {
+  value = 0.0;
+  Pt3 RAY = {B->x,B->y,B->z};
+  Pt3 d = {RAY.x-CAM.x, RAY.y-CAM.y, RAY.z-CAM.z}; // distance (RAY-CAM)
+  Pt3 a,b,c,n; // TRI points, normal
+  Pt3 INTERS; // intersection of RAY and TRI plane
   
   //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
-  
-  float dAbs = sqrt(pow(d.x,2)+pow(d.y,2)+pow(d.z,2));
-  value = fabs((d.x+d.y)/(sqrt(3)*radius));
-  if (fmodf(fabs(B->x),10)<1.33 || fmodf(fabs(B->y),10)<1.33 || fmodf(fabs(B->z),10)<1.33) { value+=0.15;value*=2;};
+  for(int i=0; i<10; i++) {
+    a = TRIANGLES[i].a;
+    b = TRIANGLES[i].b;
+    c = TRIANGLES[i].c;
+    //n = cross(,);
+
+  };
+
+  /*float dAbs = sqrt(pow(d[0],2)+pow(d[1],2)+pow(d[2],2));
+  value = fabs((d[0]+d[1])/(sqrt(3)*radius));
+  if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};*/
 
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
-  if (B->z==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
+   //if (RAY[2]==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
+
   tmlScnSpcA[px->y*xDim+px->x] = grad[normValue];
 };
 
@@ -159,25 +181,25 @@ void  castNet(){
       if (pxTarget.y!=0) { pxTarget.y += (2*pow(pxTarget.y,3))/(fabs(pxTarget.y)*yDim); pxTarget.y/=-3;};
 // 5. Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
-      Pt3 p3Dummy = {{pxTarget.x,pxTarget.y,pxTarget.z}};
+      Pt3 p3Dummy = {pxTarget.x,pxTarget.y,pxTarget.z};
       Pt3Trns xySwpMtrx = {{0,1,0},{1,0,0},{0,0,1}};
       Pt3Trns xzSwpMtrx = {{0,0,1},{0,1,0},{1,0,0}};
       int caseX = 0;
       if (pxTarget.x==0) {
         if (pxTarget.y!=0) { // swap x->y
           caseX = 1;
-          multplyM33xM31(p3Dummy,xySwpMtrx);
+          applyMtrxPt3(p3Dummy,xySwpMtrx);
         } else if (pxTarget.z!=0) { // swap x->z 
           caseX = 2;
-          multplyM33xM31(p3Dummy,xzSwpMtrx);
+          applyMtrxPt3(p3Dummy,xzSwpMtrx);
         } else {
           printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
           return;
         };
       };
-      pxTarget.x = p3Dummy[0][0];
-      pxTarget.y = p3Dummy[0][1];
-      pxTarget.z = p3Dummy[0][2];
+      pxTarget.x = p3Dummy[0];
+      pxTarget.y = p3Dummy[1];
+      pxTarget.z = p3Dummy[2];
 //
       dydx = pxTarget.y/pxTarget.x;
       dzdx = pxTarget.z/pxTarget.x;
@@ -191,27 +213,27 @@ void  castNet(){
       spherePoint.y = dydx*(spherePoint.x);
       spherePoint.z = dzdx*(spherePoint.x);
 // 7. Translate backwards {x,y,z}
-      p3Dummy[0][0] = spherePoint.x;
-      p3Dummy[0][1] = spherePoint.y;
-      p3Dummy[0][2] = spherePoint.z;
+      p3Dummy[0] = spherePoint.x;
+      p3Dummy[1] = spherePoint.y;
+      p3Dummy[2] = spherePoint.z;
       if (caseX==1) { // swap x->y
-        multplyM33xM31(p3Dummy,xySwpMtrx);
+        applyMtrxPt3(p3Dummy,xySwpMtrx);
       } else if (caseX==2) { // swap x->z
-        multplyM33xM31(p3Dummy,xzSwpMtrx); 
+        applyMtrxPt3(p3Dummy,xzSwpMtrx); 
       }
 // 8. MATRIX ROTATION:
  // 0. Setup
       Pt3Trns pitchMtrx = {{1,0,0},{0,cos(pitch),-sin(pitch)},{0,sin(pitch),cos(pitch)}};
       Pt3Trns yawMtrx = {{cos(yaw),0,sin(yaw)},{0,1,0},{-sin(yaw),0,cos(yaw)}};
  // 1. Pitch, Yaw 
-      multplyM33xM31(p3Dummy,pitchMtrx);
-      multplyM33xM31(p3Dummy,yawMtrx);
+      applyMtrxPt3(p3Dummy,pitchMtrx);
+      applyMtrxPt3(p3Dummy,yawMtrx);
  // 2. Return values to pxTarget
-      spherePoint.x = p3Dummy[0][0]+CAM.x;
-      spherePoint.y = p3Dummy[0][1]+CAM.y;
-      spherePoint.z = p3Dummy[0][2]+CAM.z;
+      spherePoint.x = p3Dummy[0]+CAM.x;
+      spherePoint.y = p3Dummy[1]+CAM.y;
+      spherePoint.z = p3Dummy[2]+CAM.z;
 // 9. Cast Ray
-      castRay(&CAM, &spherePoint, &px);
+      castRay(&spherePoint, &px);
     };
   };
 };
