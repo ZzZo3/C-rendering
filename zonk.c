@@ -44,7 +44,7 @@ float yaw = 0;
 float radius = 100; // render distance
 float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
 float yScale = 0.10; // [0..1] coef for dimensions of screenspace
-float xScale = 0.061;
+float xScale = 0.065;
 char grad[gradL] = " .,:~>+=so$W%@";
 
 int pol(float v) {
@@ -130,18 +130,6 @@ void emptyTmlScnSpc() {
 
 struct Tri3 TRIANGLES[10];
 
-float scnSpcTrns(float p, char axis) {
-  if (p==0) { return 0;}
-  if (axis=='x') {
-    p += (2*pow(p,3))/(fabs(p)*xDim);
-    p /= 3;
-  } else if (axis=='y') {
-    p += (2*pow(p,3))/(fabs(p)*xDim);
-    p /= -3;
-  };
-  return p;
-};
-
 void castRay(struct Point3 *A, struct Point3 *B, struct scnSpcPt *px) {
   float value = 0.0;
   
@@ -167,8 +155,8 @@ void  castNet(){
 // 1. Normalize pixel as pxNorm
       struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),pseuFOV};
 // 2. Apply Matrix Transform
-      pxTarget.x = scnSpcTrns(pxTarget.x,'x');
-      pxTarget.y = scnSpcTrns(pxTarget.y,'y');
+      if (pxTarget.x!=0) { pxTarget.x += (2*pow(pxTarget.x,3))/(fabs(pxTarget.x)*xDim); pxTarget.x/=3;};
+      if (pxTarget.y!=0) { pxTarget.y += (2*pow(pxTarget.y,3))/(fabs(pxTarget.y)*yDim); pxTarget.y/=-3;};
 // 5. Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
       Pt3 p3Dummy = {{pxTarget.x,pxTarget.y,pxTarget.z}};
