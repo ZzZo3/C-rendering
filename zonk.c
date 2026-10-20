@@ -18,7 +18,7 @@
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
-#define TRIANGLESLENGTH 1
+#define TRIANGLESLENGTH 4
 
 /*-----------------> UTIL <-----------------*/
 
@@ -81,6 +81,10 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[0] = A[1]*B[2]-A[2]*B[1];
   C[1] = A[2]*B[0]-A[0]*B[2];
   C[2] = A[0]*B[1]-A[1]*B[0];
+};
+
+float dist(Pt3 A) {
+  return sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]);
 };
 
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
@@ -155,11 +159,10 @@ struct Tri3 TRIANGLES[TRIANGLESLENGTH];
 
 void castRay(Pt3 RAY, struct scnSpcPt *px) {
 bool DP = false;
-if (RAY[0]==0 & RAY[1]==0) { DP=true;};
-  float dist = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
+//if (RAY[0]==0 & RAY[1]==0) { DP=true;};
   float value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
-  Pt3 INTERS; // intersection of RAY and TRI plane
+  Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
   bool foundTRI = false;
   for(int i=0; i<TRIANGLESLENGTH; i++) {
     for (int j=0; j<3; j++) {
@@ -167,7 +170,7 @@ if (RAY[0]==0 & RAY[1]==0) { DP=true;};
       b[j] = TRIANGLES[i].b[j]-CAM[j];
       c[j] = TRIANGLES[i].c[j]-CAM[j];
     };
-if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
+//if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
     for (int j=0; j<3; j++) {
       p[j] = b[j]-a[j];
       q[j] = c[j]-a[j];
@@ -175,26 +178,26 @@ if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1]
     cross(p,q,n);
     float t = dot(n,a)/dot(n,RAY);
     for (int j=0; j<3; j++) { T[j]=RAY[j]*t;}; // \dist(?)
-if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
+//if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
       c[j]-=T[j];
     };
     float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
-if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
+//if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
     if (inOutTheta>=2*M_PI) {
-      // in
-printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
-      value=1.0;
+//printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
       foundTRI=true;
+      if (dist(T)<dist(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
     } else {
-      // out
+      // outside of triangle (no render)
     };
 
   };
-  if (!foundTRI) {
-    float dAbs = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
+  if (foundTRI) {
+    value = (radius-dist(Tfnl))/radius;
+  } else {
     value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
     if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};
   };
@@ -271,8 +274,14 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 TriangleA = {{3,3,10},{3,-3,10},{-3,-3,10}};
-  TRIANGLES[0] = TriangleA;
+  struct Tri3 FloorA = {{80,-10,80},{80,-10,-80},{-80,-10,-80}};
+  struct Tri3 FloorB = {{80,-10,80},{-80,-10,80},{-80,-10,-80}};
+  struct Tri3 HouseA = {{3,-10,15},{3,10,60},{-3,-10,15}};
+  struct Tri3 HouseB = {{3,-10,15},{-3,10,60},{-3,-10,15}};
+  TRIANGLES[0] = FloorA;
+  TRIANGLES[1] = FloorB;
+  TRIANGLES[2] = HouseA;
+  TRIANGLES[3] = HouseB;
 };
 
 void buildUI() {
