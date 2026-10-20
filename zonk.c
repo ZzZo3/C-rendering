@@ -18,6 +18,7 @@
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
+#define TRIANGLESLENGTH 1
 
 /*-----------------> UTIL <-----------------*/
 
@@ -25,8 +26,9 @@ struct scnSpcPt {
   int x,y;
 };
 
+typedef float Pt2[2];
 typedef float Pt3[3];
-typedef float Pt3Trns[3][3];
+typedef float Mtrx33[9];
 
 struct Point3 {
   float x,y,z;
@@ -35,17 +37,6 @@ struct Point3 {
 struct Tri3 {
   Pt3 a,b,c;
 };
-
-char* tmlScnSpcA; // screenspace
-char* tmlScnSpcB; // UI layer
-struct Point3 CAM = {0,0,0};
-float pitch = 0; // Radians
-float yaw = 0;
-float radius = 100; // render distance
-float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
-float yScale = 0.10; // [0..1] coef for dimensions of screenspace
-float xScale = 0.065;
-char grad[gradL] = " .,:~>+=so$W%@";
 
 int pol(float v) {
   if (v>0) { return 1;};
@@ -66,11 +57,11 @@ void termLine() {
 };
 
 
-void applyMtrxPt3(Pt3 M31, Pt3Trns M33) {
+void applyMtrxPt3(Pt3 M31, Mtrx33 M33) {
   Pt3 result;
   for (int colR=0; colR<3; colR++) {
     result[colR] = 0;
-    for (int i=0; i<3; i++) { result[colR] += M31[i]*M33[i][colR];};
+    for (int i=0; i<3; i++) { result[colR] += M31[i]*M33[3*i+colR];};
   };
 
   for (int i=0; i<3; i++) {
@@ -82,13 +73,29 @@ float dot(Pt3 A, Pt3 B) {
   return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2])/(sqrt(pow(A[0],2)+pow(A[1],2)+pow(A[2],2))*sqrt(pow(B[0],2)+pow(B[1],2)+pow(B[2],2)));
 };
 
-Pt3 cross(Pt3 A, Pt3 B) {
-  Pt3 C;
+void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[0] = A[1]*B[2]-A[2]*B[1];
   C[1] = A[2]*B[0]-A[0]*B[2];
   C[2] = A[0]*B[1]-A[1]*B[0];
-  return C;
 };
+
+/*-----------------> PREDEFINED VARIABLES <-----------------*/
+
+char* tmlScnSpcA; // screenspace
+char* tmlScnSpcB; // UI layer
+Pt3 CAM = {0,0,0};
+float pitch = 0; // Radians
+float yaw = 0;
+float radius = 100; // render distance
+float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
+float yScale = 0.10; // [0..1] coef for dimensions of screenspace
+float xScale = 0.065;
+char grad[gradL] = " .,:~>+=so$W%@";
+
+Mtrx33 xySwpMtrx = {0,1,0,1,0,0,0,0,1};
+Mtrx33 xzSwpMtrx = {0,0,1,0,1,0,1,0,0};
+Mtrx33 pitchMtrx = {1,0,0,0,1,0,0,0,1};
+Mtrx33 yawMtrx = {1,0,0,0,1,0,0,0,1};
 
 /*-----------------> MATRIX <-----------------*/
 
@@ -140,21 +147,38 @@ void emptyTmlScnSpc() {
 
 /*-----------------> SCENE <-----------------*/
 
-struct Tri3 TRIANGLES[10];
+struct Tri3 TRIANGLES[TRIANGLESLENGTH];
 
-void castRay(struct Point3 *B, struct scnSpcPt *px) {
-  value = 0.0;
-  Pt3 RAY = {B->x,B->y,B->z};
-  Pt3 d = {RAY.x-CAM.x, RAY.y-CAM.y, RAY.z-CAM.z}; // distance (RAY-CAM)
-  Pt3 a,b,c,n; // TRI points, normal
+void castRay(Pt3 RAY, struct scnSpcPt *px) {
+  float value = 0.0;
+  Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 INTERS; // intersection of RAY and TRI plane
-  
-  //check list of TRIANGLES; for each, set Plane, check for Ray direction(toward,away), check if point within or outside of triangle.
-  for(int i=0; i<10; i++) {
-    a = TRIANGLES[i].a;
-    b = TRIANGLES[i].b;
-    c = TRIANGLES[i].c;
-    //n = cross(,);
+  for(int i=0; i<TRIANGLESLENGTH; i++) {
+    for (int j=0; j<3; j++) {
+      a[j] = TRIANGLES[i].a[j]-CAM[j];
+      b[j] = TRIANGLES[i].b[j]-CAM[j];
+      c[j] = TRIANGLES[i].c[j]-CAM[j];
+    };
+    for (int j=0; j<3; j++) {
+      p[j] = b[j]-a[j];
+      q[j] = c[j]-a[j];
+    };
+    cross(p,q,n);
+    float t = dot(a,n)/dot(RAY,n);
+    for (int j=0; j<3; j++) { T[j]=t*RAY[j];};
+    for (int j=0; j<3; j++) {
+      a[j]-=T[j];
+      b[j]-=T[j];
+      c[j]-=T[j];
+    };
+    float inOutTheta = acos(dot(a,b))+acos(dot(a,c))+acos(dot(b,c));
+    printf("inOutTheta: {%f,%f,%f} -> {%f,%f,%f}\n",dot(a,b),dot(a,c),dot(b,c),acos(dot(a,b)),acos(dot(a,c)),acos(dot(b,c)));
+    if (inOutTheta>=2*M_PI) {
+      // in
+      printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
+    } else {
+      // out
+    };
 
   };
 
@@ -182,8 +206,6 @@ void  castNet(){
 // 5. Get slopes from Line {0,0,0} -> pxTarget
       float tempF, dydx, dzdx;
       Pt3 p3Dummy = {pxTarget.x,pxTarget.y,pxTarget.z};
-      Pt3Trns xySwpMtrx = {{0,1,0},{1,0,0},{0,0,1}};
-      Pt3Trns xzSwpMtrx = {{0,0,1},{0,1,0},{1,0,0}};
       int caseX = 0;
       if (pxTarget.x==0) {
         if (pxTarget.y!=0) { // swap x->y
@@ -200,7 +222,6 @@ void  castNet(){
       pxTarget.x = p3Dummy[0];
       pxTarget.y = p3Dummy[1];
       pxTarget.z = p3Dummy[2];
-//
       dydx = pxTarget.y/pxTarget.x;
       dzdx = pxTarget.z/pxTarget.x;
 // 6. Extrude Ray to Sphere
@@ -222,18 +243,14 @@ void  castNet(){
         applyMtrxPt3(p3Dummy,xzSwpMtrx); 
       }
 // 8. MATRIX ROTATION:
- // 0. Setup
-      Pt3Trns pitchMtrx = {{1,0,0},{0,cos(pitch),-sin(pitch)},{0,sin(pitch),cos(pitch)}};
-      Pt3Trns yawMtrx = {{cos(yaw),0,sin(yaw)},{0,1,0},{-sin(yaw),0,cos(yaw)}};
- // 1. Pitch, Yaw 
+  // 0. Setup
+      pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
+      yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
+  // 1. Pitch, Yaw 
       applyMtrxPt3(p3Dummy,pitchMtrx);
       applyMtrxPt3(p3Dummy,yawMtrx);
- // 2. Return values to pxTarget
-      spherePoint.x = p3Dummy[0]+CAM.x;
-      spherePoint.y = p3Dummy[1]+CAM.y;
-      spherePoint.z = p3Dummy[2]+CAM.z;
 // 9. Cast Ray
-      castRay(&spherePoint, &px);
+      castRay(p3Dummy, &px);
     };
   };
 };
@@ -241,11 +258,8 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  /*p3 p3A = {{65,-30,-60}};
-  p3 p3B = {{65,-30,60}};
-  p3 p3C = {{80,60,0}};
-  struct Tri3 TriangleA = {p3A,p3B,p3C};
-  TRIANGLES[0] = TriangleA;*/
+  struct Tri3 TriangleA = {{30,30,75},{30,-30,75},{-30,-30,75}};
+  TRIANGLES[0] = TriangleA;
 };
 
 void buildUI() {
