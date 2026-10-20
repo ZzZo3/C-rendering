@@ -70,8 +70,12 @@ void applyMtrxPt3(Pt3 M31, Mtrx33 M33) {
 };
 
 float dot(Pt3 A, Pt3 B) {
-  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2])/(sqrt(pow(A[0],2)+pow(A[1],2)+pow(A[2],2))*sqrt(pow(B[0],2)+pow(B[1],2)+pow(B[2],2)));
+  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]);
 };
+
+float dotNorm(Pt3 A, Pt3 B) {
+  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]) / (sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]) * sqrt(B[0]*B[0]+B[1]*B[1]+B[2]*B[2]));
+}
 
 void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[0] = A[1]*B[2]-A[2]*B[1];
@@ -150,6 +154,9 @@ void emptyTmlScnSpc() {
 struct Tri3 TRIANGLES[TRIANGLESLENGTH];
 
 void castRay(Pt3 RAY, struct scnSpcPt *px) {
+bool DP = false;
+if (RAY[0]==0 & RAY[1]==0) { DP=true;};
+  float dist = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
   float value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 INTERS; // intersection of RAY and TRI plane
@@ -160,27 +167,26 @@ void castRay(Pt3 RAY, struct scnSpcPt *px) {
       b[j] = TRIANGLES[i].b[j]-CAM[j];
       c[j] = TRIANGLES[i].c[j]-CAM[j];
     };
-printf("TRI: {%f,%f,%f},{%f,%f,%f},{%f,%f,%f}  ->",a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);
+if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
     for (int j=0; j<3; j++) {
       p[j] = b[j]-a[j];
       q[j] = c[j]-a[j];
     };
     cross(p,q,n);
-printf("n: {%f,%f,%f}  ->",n[0],n[1],n[2]);
-    float t = dot(a,n)/dot(RAY,n);
-    float dist = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
+    float t = dot(n,a)/dot(n,RAY);
     for (int j=0; j<3; j++) { T[j]=RAY[j]*t;}; // \dist(?)
-printf("t: %f  T: {%f,%f,%f}  ",t,T[0],T[1],T[2]);
+if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
       c[j]-=T[j];
     };
-    float inOutTheta = acos(dot(a,b))+acos(dot(a,c))+acos(dot(b,c));
-printf("inOutTheta: {%f,%f,%f} -> {%f,%f,%f}\n",dot(a,b),dot(a,c),dot(b,c),acos(dot(a,b)),acos(dot(a,c)),acos(dot(b,c)));
+    float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
+if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
     if (inOutTheta>=2*M_PI) {
       // in
 printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
+      value=1.0;
       foundTRI=true;
     } else {
       // out
