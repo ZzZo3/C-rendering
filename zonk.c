@@ -153,38 +153,45 @@ void castRay(Pt3 RAY, struct scnSpcPt *px) {
   float value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 INTERS; // intersection of RAY and TRI plane
+  bool foundTRI = false;
   for(int i=0; i<TRIANGLESLENGTH; i++) {
     for (int j=0; j<3; j++) {
       a[j] = TRIANGLES[i].a[j]-CAM[j];
       b[j] = TRIANGLES[i].b[j]-CAM[j];
       c[j] = TRIANGLES[i].c[j]-CAM[j];
     };
+printf("TRI: {%f,%f,%f},{%f,%f,%f},{%f,%f,%f}  ->",a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);
     for (int j=0; j<3; j++) {
       p[j] = b[j]-a[j];
       q[j] = c[j]-a[j];
     };
     cross(p,q,n);
+printf("n: {%f,%f,%f}  ->",n[0],n[1],n[2]);
     float t = dot(a,n)/dot(RAY,n);
-    for (int j=0; j<3; j++) { T[j]=t*RAY[j];};
+    float dist = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
+    for (int j=0; j<3; j++) { T[j]=RAY[j]*t;}; // \dist(?)
+printf("t: %f  T: {%f,%f,%f}  ",t,T[0],T[1],T[2]);
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
       c[j]-=T[j];
     };
     float inOutTheta = acos(dot(a,b))+acos(dot(a,c))+acos(dot(b,c));
-    printf("inOutTheta: {%f,%f,%f} -> {%f,%f,%f}\n",dot(a,b),dot(a,c),dot(b,c),acos(dot(a,b)),acos(dot(a,c)),acos(dot(b,c)));
+printf("inOutTheta: {%f,%f,%f} -> {%f,%f,%f}\n",dot(a,b),dot(a,c),dot(b,c),acos(dot(a,b)),acos(dot(a,c)),acos(dot(b,c)));
     if (inOutTheta>=2*M_PI) {
       // in
-      printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
+printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
+      foundTRI=true;
     } else {
       // out
     };
 
   };
-
-  /*float dAbs = sqrt(pow(d[0],2)+pow(d[1],2)+pow(d[2],2));
-  value = fabs((d[0]+d[1])/(sqrt(3)*radius));
-  if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};*/
+  if (!foundTRI) {
+    float dAbs = sqrt(pow(RAY[0],2)+pow(RAY[1],2)+pow(RAY[2],2));
+    value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
+    if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};
+  };
 
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-2)+1);
@@ -258,7 +265,7 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 TriangleA = {{30,30,75},{30,-30,75},{-30,-30,75}};
+  struct Tri3 TriangleA = {{3,3,10},{3,-3,10},{-3,-3,10}};
   TRIANGLES[0] = TriangleA;
 };
 
