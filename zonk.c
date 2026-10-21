@@ -18,7 +18,7 @@
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
-#define TRIANGLESLENGTH 6
+#define TRIANGLESLENGTH 9
 
 /*-----------------> UTIL <-----------------*/
 
@@ -288,12 +288,18 @@ void buildScene() {
   struct Tri3 HouseB = {{-20,0,25},{-10,0,25},{-10,-10,25}};
   struct Tri3 HouseC = {{-10,-10,25},{-10,0,25},{-10,0,70}};
   struct Tri3 HouseD = {{-10,0,70},{-10,-10,70},{-10,-10,25}};
+  struct Tri3 RoofA = {{-20,0,25},{-10,0,25},{-15,5,25}};
+  struct Tri3 RoofB = {{-15,5,25},{-7,-3,70},{-7,-3,25}};
+  struct Tri3 RoofC = {{-15,5,25},{-7,-3,70},{-15,5,70}};
   TRIANGLES[0] = FloorA;
   TRIANGLES[1] = FloorB;
   TRIANGLES[2] = HouseA;
   TRIANGLES[3] = HouseB;
   TRIANGLES[4] = HouseC;
   TRIANGLES[5] = HouseD;
+  TRIANGLES[6] = RoofA;
+  TRIANGLES[7] = RoofB;
+  TRIANGLES[8] = RoofC;
 };
 
 void buildUI() {
