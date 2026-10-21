@@ -18,7 +18,7 @@
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
-#define TRIANGLESLENGTH 9
+#define triL 9
 
 /*-----------------> UTIL <-----------------*/
 
@@ -64,6 +64,13 @@ void termLine() {
   printf("\n");
 };
 
+float distA(Pt3 A) {
+  return sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]);
+};
+
+float distAB(Pt3 A, Pt3 B) {
+  return sqrt((A[0]-B[0])*(A[0]-B[0])+(A[1]-B[1])*(A[1]-B[1])+(A[2]-B[2])*(A[2]-B[2]));
+};
 
 void applyMtrxPt3(Pt3 M31, Mtrx33 M33) {
   Pt3 result;
@@ -71,10 +78,7 @@ void applyMtrxPt3(Pt3 M31, Mtrx33 M33) {
     result[colR] = 0;
     for (int i=0; i<3; i++) { result[colR] += M31[i]*M33[3*i+colR];};
   };
-
-  for (int i=0; i<3; i++) {
-    M31[i] = result[i];
-  };
+  for (int i=0; i<3; i++) { M31[i] = result[i];};
 };
 
 float dot(Pt3 A, Pt3 B) {
@@ -82,7 +86,7 @@ float dot(Pt3 A, Pt3 B) {
 };
 
 float dotNorm(Pt3 A, Pt3 B) {
-  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]) / (sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]) * sqrt(B[0]*B[0]+B[1]*B[1]+B[2]*B[2]));
+  return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]) / (distA(A)*distA(B));
 }
 
 void cross(Pt3 A, Pt3 B, Pt3 C) {
@@ -91,15 +95,12 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[2] = A[0]*B[1]-A[1]*B[0];
 };
 
-float dist(Pt3 A) {
-  return sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]);
-};
-
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
 
 char* tmlScnSpcA; // screenspace
 char* tmlScnSpcB; // UI layer
-Pt3 CAM = {0,0,0};
+Pt3 CAM = {0,5,0};
+Pt3 POS = {0,0,0};
 float pitch = 0; // Radians
 float yaw = 0;
 float radius = 100; // render distance
@@ -113,10 +114,12 @@ Mtrx33 xzSwpMtrx = {0,0,1,0,1,0,1,0,0};
 Mtrx33 pitchMtrx = {1,0,0,0,1,0,0,0,1};
 Mtrx33 yawMtrx = {1,0,0,0,1,0,0,0,1};
 
+struct Tri3 TRI[triL];
+Pt3 TRINORM[triL];
+
 /*-----------------> MATRIX <-----------------*/
 
 void drawPoint(char* ARRAY, struct scnSpcPt *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
-
 
 void drawLine(char* ARRAY, struct scnSpcPt *aTemp, struct scnSpcPt *bTemp, char fill) {
   bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
@@ -163,8 +166,6 @@ void emptyTmlScnSpc() {
 
 /*-----------------> SCENE <-----------------*/
 
-struct Tri3 TRIANGLES[TRIANGLESLENGTH];
-
 void castRay(Pt3 RAY, struct scnSpcPt *px) {
 bool DP = false;
 //if (RAY[0]==0 & RAY[1]==0) { DP=true;};
@@ -173,11 +174,11 @@ bool DP = false;
   Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
   bool foundTRI = false;
   ObjShade shade;
-  for(int i=0; i<TRIANGLESLENGTH; i++) {
+  for(int i=0; i<triL; i++) {
     for (int j=0; j<3; j++) {
-      a[j] = TRIANGLES[i].a[j]-CAM[j];
-      b[j] = TRIANGLES[i].b[j]-CAM[j];
-      c[j] = TRIANGLES[i].c[j]-CAM[j];
+      a[j] = TRI[i].a[j]-CAM[j];
+      b[j] = TRI[i].b[j]-CAM[j];
+      c[j] = TRI[i].c[j]-CAM[j];
     };
 //if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
     for (int j=0; j<3; j++) {
@@ -186,7 +187,7 @@ bool DP = false;
     };
     cross(p,q,n);
     float t = dot(n,a)/dot(n,RAY);
-    for (int j=0; j<3; j++) { T[j]=RAY[j]*t;}; // \dist(?)
+    for (int j=0; j<3; j++) { T[j]=RAY[j]*t;};
 //if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
@@ -198,15 +199,15 @@ bool DP = false;
     if (inOutTheta>=2*M_PI&t>=0) {
 //printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
       foundTRI=true;
-      for (int j=0; j<2; j++) { shade[j]=TRIANGLES[i].shade[j];};
-      if (dist(T)<dist(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
+      for (int j=0; j<2; j++) { shade[j]=TRI[i].shade[j];};
+      if (distA(T)<distA(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
     } else {
       // outside of triangle (no render)
     };
 
   };
   if (foundTRI) {
-    value = (radius-dist(Tfnl))/radius;
+    value = (radius-distA(Tfnl))/radius;
     if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
   } else {
      //value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
@@ -214,34 +215,18 @@ bool DP = false;
     shade[0]=0.0;shade[1]=0.0;
   };
 //SHADING
-  if (shade[0]==0.0) {
-    value = shade[1];
-  } else if (shade[0]==1.0) {
-    value = (radius-dist(Tfnl))/radius;
-  } else if (shade[0]==2.0) {
-    if (shade[1]==1.0) {
-      value=Tfnl[0]/radius;
-    } else if (shade[1]==-1.0) {
-      value=(radius-Tfnl[0])/radius;
-    } else if (shade[1]==2.0) {
-      value=Tfnl[1]/radius;
-    } else if (shade[1]==-2.0) {
-      value=(radius-Tfnl[1])/radius;
-    } else if (shade[1]==3.0) {
-      value=Tfnl[2]/radius;
-    } else if (shade[1]==-3.0) {
-      value=(radius-Tfnl[2])/radius; 
-    } else {
-      value=0.0;
-    };
-  } else {
-    value=0.0;
-  };
-//VALUE MAPPING
+ /*mono*/ if (shade[0]==0.0) { value = shade[1];} else
+ /*dist*/ if (shade[0]==1.0) { value = (radius-distA(Tfnl))/radius;} else
+ /*axis*/ if (shade[0]==2.0) {
+    if (shade[1]==1.0) { value=Tfnl[0]/radius;} else
+    if (shade[1]==-1.0) { value=(radius-Tfnl[0])/radius;} else
+    if (shade[1]==2.0) { value=Tfnl[1]/radius;} else
+    if (shade[1]==-2.0) { value=(radius-Tfnl[1])/radius;} else
+    if (shade[1]==3.0) { value=Tfnl[2]/radius;} else
+    if (shade[1]==-3.0) { value=(radius-Tfnl[2])/radius;} else { value=0.0;};
+  } else { value=0.0;};
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-1));
-   //if (RAY[2]==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
-
   tmlScnSpcA[px->y*xDim+px->x] = grad[normValue];
 };
 
@@ -294,11 +279,7 @@ void  castNet(){
       } else if (caseX==2) { // swap x->z
         applyMtrxPt3(p3Dummy,xzSwpMtrx); 
       }
-// 8. MATRIX ROTATION:
-  // 0. Setup
-      pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
-      yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
-  // 1. Pitch, Yaw 
+// 8. MATRIX ROTATION: 
       applyMtrxPt3(p3Dummy,pitchMtrx);
       applyMtrxPt3(p3Dummy,yawMtrx);
 // 9. Cast Ray
@@ -319,15 +300,15 @@ void buildScene() {
   struct Tri3 RoofA = {{-20,0,25},{-10,0,25},{-15,5,25},{0,1}};
   struct Tri3 RoofB = {{-15,5,25},{-7,-3,70},{-7,-3,25},{0,1}};
   struct Tri3 RoofC = {{-15,5,25},{-7,-3,70},{-15,5,70},{0,0.5}};
-  TRIANGLES[0] = FloorA;
-  TRIANGLES[1] = FloorB;
-  TRIANGLES[2] = HouseA;
-  TRIANGLES[3] = HouseB;
-  TRIANGLES[4] = HouseC;
-  TRIANGLES[5] = HouseD;
-  TRIANGLES[6] = RoofA;
-  TRIANGLES[7] = RoofB;
-  TRIANGLES[8] = RoofC;
+  TRI[0] = FloorA;
+  TRI[1] = FloorB;
+  TRI[2] = HouseA;
+  TRI[3] = HouseB;
+  TRI[4] = HouseC;
+  TRI[5] = HouseD;
+  TRI[6] = RoofA;
+  TRI[7] = RoofB;
+  TRI[8] = RoofC;
 };
 
 void buildUI() {
@@ -342,41 +323,63 @@ void buildUI() {
 /*-----------------> PROG <-----------------*/
 
 void startup() {
-  emptyTmlScnSpc();
+  tmlScnSpcA=(char*)malloc(xDim*yDim);
+  tmlScnSpcB=(char*)malloc(xDim*yDim);
+  buildScene();
 };
 
 void render() {
-  buildScene();
+  emptyTmlScnSpc();
+  pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
+  yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
   castNet();
   buildUI();
   printTml();
 };
 
-void pitchUp(float by) { pitch+=by;startup();render();};
-void yawLeft(float by) { yaw+=by;startup();render();};
+void pitchUp(float by) { pitch+=by;render();};
+void yawLeft(float by) { yaw+=by;render();};
+void walkForward(float by) {
+  Pt3 unitZ = {0,0,by};
+  applyMtrxPt3(unitZ,yawMtrx);
+  POS[0]+=unitZ[0];POS[2]+=unitZ[2];
+  CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
+};
+void walkRight(float by) {
+  Pt3 unitZ = {by,0,0};
+  applyMtrxPt3(unitZ,yawMtrx);
+  POS[0]+=unitZ[0];POS[2]+=unitZ[2];
+  CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
+};
 
 int parse(char cmd[]) {
-  if (cmd[0]=='x') { return 1;};
-  if (cmd[0]=='w') { return 2;};
-  if (cmd[0]=='s') { return 3;};
-  if (cmd[0]=='a') { return 4;};
-  if (cmd[0]=='d') { return 5;};
+  if (cmd[0]=='x') { return 1;} else
+  if (cmd[0]=='w') { return 2;} else
+  if (cmd[0]=='s') { return 3;} else
+  if (cmd[0]=='a') { return 4;} else
+  if (cmd[0]=='d') { return 5;} else
+  if (cmd[0]=='i') { return 6;} else
+  if (cmd[0]=='k') { return 7;} else
+  if (cmd[0]=='j') { return 8;} else
+  if (cmd[0]=='l') { return 9;};
   return 0;
 };
 
 void run(int code) {
-  if (code==2) {pitchUp(-3.1415/32);}
-  else if (code==3) {pitchUp(3.1415/32);}
-  else if (code==4) {yawLeft(3.1415/32);}
-  else if (code==5) {yawLeft(-3.1415/32);};
+  if (code==2) {pitchUp(-3.1415/32);} else
+  if (code==3) {pitchUp(3.1415/32);} else
+  if (code==4) {yawLeft(3.1415/32);} else
+  if (code==5) {yawLeft(-3.1415/32);} else
+  if (code==6) {walkForward(2.5);} else
+  if (code==7) {walkForward(-2.5);} else
+  if (code==8) {walkRight(2.5);} else
+  if (code==9) {walkRight(-2.5);};
   return;
 };
 
 /*-----------------> MAIN <-----------------*/
 
 int main() {
-  tmlScnSpcA=(char*)malloc(xDim*yDim);
-  tmlScnSpcB=(char*)malloc(xDim*yDim);
   startup();
   render();
   bool running = true;
