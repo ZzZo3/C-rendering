@@ -18,7 +18,7 @@
 #define xDim /*211*/ 375
 #define gradL 14
 #define MAXINPUT 64
-#define TRIANGLESLENGTH 4
+#define TRIANGLESLENGTH 6
 
 /*-----------------> UTIL <-----------------*/
 
@@ -29,6 +29,13 @@ struct scnSpcPt {
 typedef float Pt2[2];
 typedef float Pt3[3];
 typedef float Mtrx33[9];
+typedef float ObjShade[2];/*
+ObjShade Table
+0|Mono        |Value
+1|Distance    |Multiplier
+2|AxisGradiant|Axis: 1:x -1:-x 2:y -2:-y 3:z -3:-z
+
+*/
 
 struct Point3 {
   float x,y,z;
@@ -186,7 +193,7 @@ bool DP = false;
     };
     float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
 //if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
-    if (inOutTheta>=2*M_PI) {
+    if (inOutTheta>=2*M_PI&t>=0) {
 //printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
       foundTRI=true;
       if (dist(T)<dist(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
@@ -198,12 +205,13 @@ bool DP = false;
   if (foundTRI) {
     value = (radius-dist(Tfnl))/radius;
   } else {
-    value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
-    if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};
+    //value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
+    //if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};
+    value = 0.0;
   };
-
-  if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
-  int normValue = round(value*(gradL-2)+1);
+//VALUE MAPPING
+  if (value>1.0) { value=1.0;} else if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
+  int normValue = round(value*(gradL-1));
    //if (RAY[2]==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
 
   tmlScnSpcA[px->y*xDim+px->x] = grad[normValue];
@@ -274,14 +282,18 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{80,-10,80},{80,-10,-80},{-80,-10,-80}};
-  struct Tri3 FloorB = {{80,-10,80},{-80,-10,80},{-80,-10,-80}};
-  struct Tri3 HouseA = {{3,-10,15},{3,10,60},{-3,-10,15}};
-  struct Tri3 HouseB = {{3,-10,15},{-3,10,60},{-3,-10,15}};
+  struct Tri3 FloorA = {{70,-10,70},{70,-10,-70},{-70,-10,-70}};
+  struct Tri3 FloorB = {{70,-10,70},{-70,-10,70},{-70,-10,-70}};
+  struct Tri3 HouseA = {{-20,-10,25},{-20,0,25},{-10,-10,25}};
+  struct Tri3 HouseB = {{-20,0,25},{-10,0,25},{-10,-10,25}};
+  struct Tri3 HouseC = {{-10,-10,25},{-10,0,25},{-10,0,70}};
+  struct Tri3 HouseD = {{-10,0,70},{-10,-10,70},{-10,-10,25}};
   TRIANGLES[0] = FloorA;
   TRIANGLES[1] = FloorB;
   TRIANGLES[2] = HouseA;
   TRIANGLES[3] = HouseB;
+  TRIANGLES[4] = HouseC;
+  TRIANGLES[5] = HouseD;
 };
 
 void buildUI() {
