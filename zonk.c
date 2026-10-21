@@ -19,6 +19,7 @@
 #define gradL 14
 #define MAXINPUT 64
 #define triL 9
+#define camHeight 5
 
 /*-----------------> UTIL <-----------------*/
 
@@ -99,7 +100,7 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
 
 char* tmlScnSpcA; // screenspace
 char* tmlScnSpcB; // UI layer
-Pt3 CAM = {0,5,0};
+Pt3 CAM = {0,camHeight,0};
 Pt3 POS = {0,0,0};
 float pitch = 0; // Radians
 float yaw = 0;
@@ -258,7 +259,7 @@ void  castNet(){
       };
       pxTarget.x = p3Dummy[0];
       pxTarget.y = p3Dummy[1];
-      pxTarget.z = p3Dummy[2];
+      pxTarget.z = p3Dummy[2]; /*@grok fix this one pls*/
       dydx = pxTarget.y/pxTarget.x;
       dzdx = pxTarget.z/pxTarget.x;
 // 6. Extrude Ray to Sphere
@@ -291,15 +292,15 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{70,-10,70},{70,-10,-70},{-70,-10,-70},{1,1}};
-  struct Tri3 FloorB = {{70,-10,70},{-70,-10,70},{-70,-10,-70},{1,1}};
-  struct Tri3 HouseA = {{-20,-10,25},{-10,0,25},{-10,-10,25},{0,1}};
-  struct Tri3 HouseB = {{-20,-10,25},{-10,0,25},{-20,0,25},{0,0.5}};
-  struct Tri3 HouseC = {{-10,-10,25},{-10,0,25},{-10,0,70},{0,0.5}};
-  struct Tri3 HouseD = {{-10,0,70},{-10,-10,70},{-10,-10,25},{0,1}};
-  struct Tri3 RoofA = {{-20,0,25},{-10,0,25},{-15,5,25},{0,1}};
-  struct Tri3 RoofB = {{-15,5,25},{-7,-3,70},{-7,-3,25},{0,1}};
-  struct Tri3 RoofC = {{-15,5,25},{-7,-3,70},{-15,5,70},{0,0.5}};
+  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}};
+  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}};
+  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{0,1}};
+  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}};
+  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{0,1}};
+  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
+  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
+  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
+  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{0,0.5}};
   TRI[0] = FloorA;
   TRI[1] = FloorB;
   TRI[2] = HouseA;
@@ -344,12 +345,14 @@ void walkForward(float by) {
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
+  render();
 };
 void walkRight(float by) {
   Pt3 unitZ = {by,0,0};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
+  render();
 };
 
 int parse(char cmd[]) {
@@ -372,8 +375,8 @@ void run(int code) {
   if (code==5) {yawLeft(-3.1415/32);} else
   if (code==6) {walkForward(2.5);} else
   if (code==7) {walkForward(-2.5);} else
-  if (code==8) {walkRight(2.5);} else
-  if (code==9) {walkRight(-2.5);};
+  if (code==8) {walkRight(-2.5);} else
+  if (code==9) {walkRight(2.5);};
   return;
 };
 
