@@ -43,6 +43,7 @@ struct Point3 {
 
 struct Tri3 {
   Pt3 a,b,c;
+  ObjShade shade;
 };
 
 int pol(float v) {
@@ -171,6 +172,7 @@ bool DP = false;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
   bool foundTRI = false;
+  ObjShade shade;
   for(int i=0; i<TRIANGLESLENGTH; i++) {
     for (int j=0; j<3; j++) {
       a[j] = TRIANGLES[i].a[j]-CAM[j];
@@ -196,6 +198,7 @@ bool DP = false;
     if (inOutTheta>=2*M_PI&t>=0) {
 //printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
       foundTRI=true;
+      for (int j=0; j<2; j++) { shade[j]=TRIANGLES[i].shade[j];};
       if (dist(T)<dist(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
     } else {
       // outside of triangle (no render)
@@ -204,13 +207,38 @@ bool DP = false;
   };
   if (foundTRI) {
     value = (radius-dist(Tfnl))/radius;
+    if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
   } else {
-    //value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
-    //if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;};
-    value = 0.0;
+     //value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
+     //if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;}; 
+    shade[0]=0.0;shade[1]=0.0;
+  };
+//SHADING
+  if (shade[0]==0.0) {
+    value = shade[1];
+  } else if (shade[0]==1.0) {
+    value = (radius-dist(Tfnl))/radius;
+  } else if (shade[0]==2.0) {
+    if (shade[1]==1.0) {
+      value=Tfnl[0]/radius;
+    } else if (shade[1]==-1.0) {
+      value=(radius-Tfnl[0])/radius;
+    } else if (shade[1]==2.0) {
+      value=Tfnl[1]/radius;
+    } else if (shade[1]==-2.0) {
+      value=(radius-Tfnl[1])/radius;
+    } else if (shade[1]==3.0) {
+      value=Tfnl[2]/radius;
+    } else if (shade[1]==-3.0) {
+      value=(radius-Tfnl[2])/radius; 
+    } else {
+      value=0.0;
+    };
+  } else {
+    value=0.0;
   };
 //VALUE MAPPING
-  if (value>1.0) { value=1.0;} else if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
+  if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-1));
    //if (RAY[2]==0) { printf("  B->z: %f  value: %f  normValue: %d\n",B->z,value,normValue);};
 
@@ -282,15 +310,15 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{70,-10,70},{70,-10,-70},{-70,-10,-70}};
-  struct Tri3 FloorB = {{70,-10,70},{-70,-10,70},{-70,-10,-70}};
-  struct Tri3 HouseA = {{-20,-10,25},{-20,0,25},{-10,-10,25}};
-  struct Tri3 HouseB = {{-20,0,25},{-10,0,25},{-10,-10,25}};
-  struct Tri3 HouseC = {{-10,-10,25},{-10,0,25},{-10,0,70}};
-  struct Tri3 HouseD = {{-10,0,70},{-10,-10,70},{-10,-10,25}};
-  struct Tri3 RoofA = {{-20,0,25},{-10,0,25},{-15,5,25}};
-  struct Tri3 RoofB = {{-15,5,25},{-7,-3,70},{-7,-3,25}};
-  struct Tri3 RoofC = {{-15,5,25},{-7,-3,70},{-15,5,70}};
+  struct Tri3 FloorA = {{70,-10,70},{70,-10,-70},{-70,-10,-70},{1,1}};
+  struct Tri3 FloorB = {{70,-10,70},{-70,-10,70},{-70,-10,-70},{1,1}};
+  struct Tri3 HouseA = {{-20,-10,25},{-10,0,25},{-10,-10,25},{0,1}};
+  struct Tri3 HouseB = {{-20,-10,25},{-10,0,25},{-20,0,25},{0,0.5}};
+  struct Tri3 HouseC = {{-10,-10,25},{-10,0,25},{-10,0,70},{0,0.5}};
+  struct Tri3 HouseD = {{-10,0,70},{-10,-10,70},{-10,-10,25},{0,1}};
+  struct Tri3 RoofA = {{-20,0,25},{-10,0,25},{-15,5,25},{0,1}};
+  struct Tri3 RoofB = {{-15,5,25},{-7,-3,70},{-7,-3,25},{0,1}};
+  struct Tri3 RoofC = {{-15,5,25},{-7,-3,70},{-15,5,70},{0,0.5}};
   TRIANGLES[0] = FloorA;
   TRIANGLES[1] = FloorB;
   TRIANGLES[2] = HouseA;
