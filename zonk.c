@@ -327,6 +327,20 @@ void startup() {
   tmlScnSpcA=(char*)malloc(xDim*yDim);
   tmlScnSpcB=(char*)malloc(xDim*yDim);
   buildScene();
+  Pt3 a,b,c,p,q,n;
+  for (int i=0; i<triL; i++) {
+    for (int j=0; j<3; j++) {
+      a[j] = TRI[i].a[j]-CAM[j];
+      b[j] = TRI[i].b[j]-CAM[j];
+      c[j] = TRI[i].c[j]-CAM[j];
+    };
+    for (int j=0; j<3; j++) {
+      p[j] = b[j]-a[j];
+      q[j] = c[j]-a[j];
+    };
+    cross(p,q,n);
+    for (int j=0; j<3; j++) { TRINORM[i][j]=n[j];};
+  };
 };
 
 void render() {
