@@ -27,20 +27,15 @@ struct scnSpcPt {
   int x,y;
 };
 
-typedef float Pt2[2];
+typedef int Pt2[2];
 typedef float Pt3[3];
 typedef float Mtrx33[9];
-typedef float ObjShade[2];/*
-ObjShade Table
+typedef float ObjShade[2];
+/* ObjShade Table
 0|Mono        |Value
 1|Distance    |Multiplier
 2|AxisGradiant|Axis: 1:x -1:-x 2:y -2:-y 3:z -3:-z
-
 */
-
-struct Point3 {
-  float x,y,z;
-};
 
 struct Tri3 {
   Pt3 a,b,c;
@@ -108,6 +103,9 @@ float radius = 100; // render distance
 float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
 float yScale = 0.10; // [0..1] coef for dimensions of screenspace
 float xScale = 0.065;
+
+int scnDims[2] = {xDim,yDim};
+
 char grad[gradL] = " .,:~>+=so$W%@";
 
 Mtrx33 xySwpMtrx = {0,1,0,1,0,0,0,0,1};
@@ -120,27 +118,27 @@ Pt3 TRINORM[triL];
 
 /*-----------------> MATRIX <-----------------*/
 
-void drawPoint(char* ARRAY, struct scnSpcPt *p, char fill) { ARRAY[p->y*xDim+p->x] = fill;};
+void drawPoint(char* ARRAY, Pt2 p, char fill) { ARRAY[p[1]*xDim+p[0]] = fill;};
 
-void drawLine(char* ARRAY, struct scnSpcPt *aTemp, struct scnSpcPt *bTemp, char fill) {
-  bool sortX = bTemp->x > aTemp->x, sortY = bTemp->y > aTemp->y;
-  bool vert = aTemp->x == bTemp->x, horz = aTemp->y == bTemp->y;
-  bool shallow = ( fabs(((float)bTemp->y - aTemp->y)/(bTemp->x - aTemp->x)) <= 1.0 || horz ) && !vert;
-  struct scnSpcPt a, b;
-  if ( (sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert)) ) { a = *aTemp; b = *bTemp;} else { a = *bTemp; b = *aTemp;};
+void drawLine(char* ARRAY, Pt2 a, Pt2 b, char fill) {
+  bool sortX = b[0] > a[0], sortY = b[1] > a[1];
+  bool vert = a[0] == b[0], horz = a[1] == b[1];
+  bool shallow = ( fabs(((float)b[1] - a[1])/(b[0] - a[0])) <= 1.0 || horz ) && !vert;
+  /*if ( !((sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert))) ) { };*/
+  if ( !(sortX & sortY) & !(sortX & (shallow||horz)) & !(sortY & (!shallow||vert)) ) { Pt2 temp={b[0],b[1]};b=a;a=temp;};
   if (shallow) {
-    for (int xi=a.x; xi<=b.x; xi++) {
-      float m = ((float)b.y-a.y)/(b.x-a.x);
-      float y = m * (xi - a.x) + a.y;
-      struct scnSpcPt pTemp = {xi,y+0.5};
-      drawPoint(ARRAY,&pTemp,fill);
+    for (int xi=a[0]; xi<=b[0]; xi++) {
+      float m = ((float)b[1]-a[1])/(b[0]-a[0]);
+      float y = m * (xi - a[0]) + a[1];
+      Pt2 pTemp = {xi,y+0.5};
+      drawPoint(ARRAY,pTemp,fill);
     };
   } else {
-    for (int yi=a.y; yi<=b.y; yi++) {
-      float m = ((float)b.x-a.x)/(b.y-a.y);
-      float x = m * (yi-a.y) + a.x;
-      struct scnSpcPt pTemp = {x+0.5,yi};
-      drawPoint(ARRAY,&pTemp,fill);
+    for (int yi=a[1]; yi<=b[1]; yi++) {
+      float m = ((float)b[0]-a[0])/(b[1]-a[1]);
+      float x = m * (yi-a[1]) + a[0];
+      Pt2 pTemp = {x+0.5,yi};
+      drawPoint(ARRAY,pTemp,fill);
     };
   };
 };
@@ -167,7 +165,7 @@ void emptyTmlScnSpc() {
 
 /*-----------------> SCENE <-----------------*/
 
-void castRay(Pt3 RAY, struct scnSpcPt *px, Pt3 Target) {
+void castRay(Pt3 RAY, Pt2 px) {
 bool DP = false;
 //if (RAY[0]==0 & RAY[1]==0) { DP=true;};
   float value = 0.0;
@@ -193,14 +191,13 @@ bool DP = false;
     float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
 //if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
     if (inOutTheta>=2*M_PI&t>=0) {
-//printf("IN @ screenspace {%d,%d}\n",px->x,px->y);
+//printf("IN @ screenspace {%d,%d}\n",px[0],px[1]);
       foundTRI=true;
       for (int j=0; j<2; j++) { shade[j]=TRI[i].shade[j];};
       if (distA(T)<distA(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
     } else {
       // outside of triangle (no render)
     };
-
   };
   if (foundTRI) {
     value = (radius-distA(Tfnl))/radius;
@@ -223,64 +220,52 @@ bool DP = false;
   } else { value=0.0;};
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-1));
-  tmlScnSpcA[px->y*xDim+px->x] = grad[normValue];
+  tmlScnSpcA[px[1]*xDim+px[0]] = grad[normValue];
 };
 
 void  castNet(){
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
 // 0. Define px for later
-      struct scnSpcPt px = {xi,yi};
-// 1. Normalize pixel as pxNorm
-      struct Point3 pxTarget = {xScale*(xi-floor(xDim/2)),yScale*(yi-floor(yDim/2)),pseuFOV};
-// 2. Apply Matrix Transform
-      if (pxTarget.x!=0) { pxTarget.x += (2*pow(pxTarget.x,3))/(fabs(pxTarget.x)*xDim); pxTarget.x/=3;};
-      if (pxTarget.y!=0) { pxTarget.y += (2*pow(pxTarget.y,3))/(fabs(pxTarget.y)*yDim); pxTarget.y/=-3;};
-// 5. Get slopes from Line {0,0,0} -> pxTarget
+// 1. Generate Pt3 for pixel
+      Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
+// 2. Apply Screenspace Transform
+      for (int i=0; i<2; i++) { if (p3Dummy[i]!=0) {
+        p3Dummy[i] += (2*pow(p3Dummy[i],3))/(fabs(p3Dummy[i])*scnDims[i]); p3Dummy[i]/=3;
+      };};
+      p3Dummy[1] *= -1;
+// 5. Get slopes from Line {0,0,0} -> p3Dummy
       float tempF, dydx, dzdx;
-      Pt3 p3Dummy = {pxTarget.x,pxTarget.y,pxTarget.z};
-      int caseX = 0;
-      if (pxTarget.x==0) {
-        if (pxTarget.y!=0) { // swap x->y
-          caseX = 1;
+      int slopeCase = 0;
+      if (p3Dummy[0]==0) {
+        if (p3Dummy[1]!=0) { // swap x -> y
+          slopeCase = 1;
           applyMtrxPt3(p3Dummy,xySwpMtrx);
-        } else if (pxTarget.z!=0) { // swap x->z 
-          caseX = 2;
+        } else if (p3Dummy[2]!=0) { // swap x -> z 
+          slopeCase = 2;
           applyMtrxPt3(p3Dummy,xzSwpMtrx);
         } else {
           printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
           return;
         };
       };
-      pxTarget.x = p3Dummy[0];
-      pxTarget.y = p3Dummy[1];
-      pxTarget.z = p3Dummy[2]; /*@grok fix this one pls*/
-      dydx = pxTarget.y/pxTarget.x;
-      dzdx = pxTarget.z/pxTarget.x;
+      dydx = p3Dummy[1]/p3Dummy[0];
+      dzdx = p3Dummy[2]/p3Dummy[0];
 // 6. Extrude Ray to Sphere
-      struct Point3 spherePoint;
-      float xSphereARR[2];
-      xSphereARR[0] = sqrt(radius*radius/(pow(dydx,2)+pow(dzdx,2)+1));
-      xSphereARR[1] = 0-xSphereARR[0];
-      if (pol(pxTarget.x)==pol(xSphereARR[0])) { spherePoint.x = xSphereARR[0];}
-      else { spherePoint.x = xSphereARR[1];};
-      spherePoint.y = dydx*(spherePoint.x);
-      spherePoint.z = dzdx*(spherePoint.x);
+      float xOptA = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1));
+      float xOptB = -xOptA;
+      if (pol(p3Dummy[0])==pol(xOptA)) { p3Dummy[0]=xOptA;} else { p3Dummy[0]=xOptB;};
+      p3Dummy[1] = dydx*(p3Dummy[0]);
+      p3Dummy[2] = dzdx*(p3Dummy[0]);
 // 7. Translate backwards {x,y,z}
-      p3Dummy[0] = spherePoint.x;
-      p3Dummy[1] = spherePoint.y;
-      p3Dummy[2] = spherePoint.z;
-      if (caseX==1) { // swap x->y
-        applyMtrxPt3(p3Dummy,xySwpMtrx);
-      } else if (caseX==2) { // swap x->z
-        applyMtrxPt3(p3Dummy,xzSwpMtrx); 
-      }
+      if (slopeCase==1) { applyMtrxPt3(p3Dummy,xySwpMtrx);} else
+      if (slopeCase==2) { applyMtrxPt3(p3Dummy,xzSwpMtrx);};
 // 8. MATRIX ROTATION: 
       applyMtrxPt3(p3Dummy,pitchMtrx);
       applyMtrxPt3(p3Dummy,yawMtrx);
 // 9. Cast Ray
-      castRay(p3Dummy, &px, p3Dummy);
-
+      Pt2 px = {xi,yi};
+      castRay(p3Dummy, px);
     };
   };
 };
@@ -309,12 +294,12 @@ void buildScene() {
 };
 
 void buildUI() {
-  struct scnSpcPt pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
-  struct scnSpcPt pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
-  struct scnSpcPt pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
-  drawPoint(tmlScnSpcB, &pUIa,'\\');drawPoint(tmlScnSpcB, &pUIb,'|');drawPoint(tmlScnSpcB, &pUIc,'/');
-  drawPoint(tmlScnSpcB, &pUId,'-');drawPoint(tmlScnSpcB, &pUIe,'-');
-  drawPoint(tmlScnSpcB, &pUIf,'/');drawPoint(tmlScnSpcB, &pUIg,'|');drawPoint(tmlScnSpcB, &pUIh,'\\');
+  Pt2 pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
+  Pt2 pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
+  Pt2 pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
+  drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
+  drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
+  drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
 };
 
 /*-----------------> PROG <-----------------*/
