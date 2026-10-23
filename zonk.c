@@ -115,11 +115,12 @@ Pt3 TRINORM[triL];
 /*-----------------> FILE HANDLING <-----------------*/
 
 void saveData() {
-  FILE* fPtr;
-  fPtr = fopen("data.txt","w");
-  if (fPtr=NULL) { printf("ERROR: \"./data.txt\" not created\n");return;};
+  FILE* file;
+  file = fopen("./data.txt","w");
+  if (file=NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
   float b = 0.79832;
-  fprintf(fPtr,"%f\n",b);
+  fprintf(file,"> hello zinc world...\n");
+  fclose(file);
   printf("data saved.\n");
 };
 
