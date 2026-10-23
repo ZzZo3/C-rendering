@@ -167,7 +167,7 @@ void emptyTmlScnSpc() {
 
 /*-----------------> SCENE <-----------------*/
 
-void castRay(Pt3 RAY, struct scnSpcPt *px) {
+void castRay(Pt3 RAY, struct scnSpcPt *px, Pt3 Target) {
 bool DP = false;
 //if (RAY[0]==0 & RAY[1]==0) { DP=true;};
   float value = 0.0;
@@ -180,14 +180,9 @@ bool DP = false;
       a[j] = TRI[i].a[j]-CAM[j];
       b[j] = TRI[i].b[j]-CAM[j];
       c[j] = TRI[i].c[j]-CAM[j];
+      n[j] = TRINORM[i][j];
     };
-//if (DP) {printf("RAY %f %f %f -> ",RAY[0],RAY[1],RAY[2],a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
-    for (int j=0; j<3; j++) {
-      p[j] = b[j]-a[j];
-      q[j] = c[j]-a[j];
-    };
-    cross(p,q,n);
-    float t = dot(n,a)/dot(n,RAY);
+    float t = dot(a,n)/dot(n,RAY);
     for (int j=0; j<3; j++) { T[j]=RAY[j]*t;};
 //if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
     for (int j=0; j<3; j++) {
@@ -284,7 +279,8 @@ void  castNet(){
       applyMtrxPt3(p3Dummy,pitchMtrx);
       applyMtrxPt3(p3Dummy,yawMtrx);
 // 9. Cast Ray
-      castRay(p3Dummy, &px);
+      castRay(p3Dummy, &px, p3Dummy);
+
     };
   };
 };
@@ -340,6 +336,7 @@ void startup() {
     };
     cross(p,q,n);
     for (int j=0; j<3; j++) { TRINORM[i][j]=n[j];};
+    TRINORM[i][3] = dot(n,a);
   };
 };
 
