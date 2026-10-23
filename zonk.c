@@ -23,10 +23,6 @@
 
 /*-----------------> UTIL <-----------------*/
 
-struct scnSpcPt {
-  int x,y;
-};
-
 typedef int Pt2[2];
 typedef float Pt3[3];
 typedef float Mtrx33[9];
