@@ -112,6 +112,17 @@ Mtrx33 yawMtrx = {1,0,0,0,1,0,0,0,1};
 struct Tri3 TRI[triL];
 Pt3 TRINORM[triL];
 
+/*-----------------> FILE HANDLING <-----------------*/
+
+void saveData() {
+  FILE* fPtr;
+  fPtr = fopen("data.txt","w");
+  if (fPtr=NULL) { printf("ERROR: \"./data.txt\" not created\n");return;};
+  float b = 0.79832;
+  fprintf(fPtr,"%f\n",b);
+  printf("data saved.\n");
+};
+
 /*-----------------> MATRIX <-----------------*/
 
 void drawPoint(char* ARRAY, Pt2 p, char fill) { ARRAY[p[1]*xDim+p[0]] = fill;};
@@ -159,11 +170,32 @@ void emptyTmlScnSpc() {
   for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcA[y*xDim+x]=' '; tmlScnSpcB[y*xDim+x]=' ';};};
 };
 
+void writeTxtLine(Pt2 corner, char txt[], int length, int size) {
+  for (int cursor=0; cursor<length; cursor++) {
+    /*...*/
+    printf("hello");
+    Pt2 a = {corner[0]+(size*cursor),corner[1]};
+    Pt2 b = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
+    drawLine(tmlScnSpcB,a,b,'X');
+  };
+};
+
+void buildUI() {
+  Pt2 pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
+  Pt2 pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
+  Pt2 pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
+  drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
+  drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
+  drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
+  Pt2 _corner = {10,10};
+  char _text[5] = "hello";
+  writeTxtLine(_corner,_text,5,6);
+};
+
 /*-----------------> SCENE <-----------------*/
 
 void castRay(Pt3 RAY, Pt2 px) {
-bool DP = false;
-//if (RAY[0]==0 & RAY[1]==0) { DP=true;};
+  bool DP = false;
   float value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
@@ -178,16 +210,13 @@ bool DP = false;
     };
     float t = dot(a,n)/dot(n,RAY);
     for (int j=0; j<3; j++) { T[j]=RAY[j]*t;};
-//if (DP) {printf("\tt %f T %f %f %f -> ",t,T[0],T[1],T[2]);};
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
       c[j]-=T[j];
     };
     float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
-//if (DP) {printf("\tinOutTheta %f %f %f|%f %f %f|%f\n",dotNorm(a,b),dotNorm(a,c),dotNorm(b,c),acos(dotNorm(a,b)),acos(dotNorm(a,c)),acos(dotNorm(b,c)),inOutTheta);};
     if (inOutTheta>=2*M_PI&t>=0) {
-//printf("IN @ screenspace {%d,%d}\n",px[0],px[1]);
       foundTRI=true;
       for (int j=0; j<2; j++) { shade[j]=TRI[i].shade[j];};
       if (distA(T)<distA(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
@@ -222,44 +251,36 @@ bool DP = false;
 void  castNet(){
   for(int yi=0; yi<yDim; yi++) {
     for(int xi=0; xi<xDim; xi++) {
-// 0. Define px for later
-// 1. Generate Pt3 for pixel
+//0. Generate Pt3 for pixel
       Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
-// 2. Apply Screenspace Transform
+//1. Apply Screenspace Transform
       for (int i=0; i<2; i++) { if (p3Dummy[i]!=0) {
         p3Dummy[i] += (2*pow(p3Dummy[i],3))/(fabs(p3Dummy[i])*scnDims[i]); p3Dummy[i]/=3;
       };};
       p3Dummy[1] *= -1;
-// 5. Get slopes from Line {0,0,0} -> p3Dummy
+//2. Get Slopes (X-Swaps?)
       float tempF, dydx, dzdx;
       int slopeCase = 0;
       if (p3Dummy[0]==0) {
-        if (p3Dummy[1]!=0) { // swap x -> y
-          slopeCase = 1;
-          applyMtrxPt3(p3Dummy,xySwpMtrx);
-        } else if (p3Dummy[2]!=0) { // swap x -> z 
-          slopeCase = 2;
-          applyMtrxPt3(p3Dummy,xzSwpMtrx);
-        } else {
-          printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");
-          return;
-        };
+        if (p3Dummy[1]!=0) { slopeCase=1; applyMtrxPt3(p3Dummy,xySwpMtrx);} else
+        if (p3Dummy[2]!=0) { slopeCase=2; applyMtrxPt3(p3Dummy,xzSwpMtrx);}
+        else { printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");return;};
       };
       dydx = p3Dummy[1]/p3Dummy[0];
       dzdx = p3Dummy[2]/p3Dummy[0];
-// 6. Extrude Ray to Sphere
+//3. Extrude Ray to Sphere
       float xOptA = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1));
       float xOptB = -xOptA;
       if (pol(p3Dummy[0])==pol(xOptA)) { p3Dummy[0]=xOptA;} else { p3Dummy[0]=xOptB;};
       p3Dummy[1] = dydx*(p3Dummy[0]);
       p3Dummy[2] = dzdx*(p3Dummy[0]);
-// 7. Translate backwards {x,y,z}
+//4. Undo X-Swaps
       if (slopeCase==1) { applyMtrxPt3(p3Dummy,xySwpMtrx);} else
       if (slopeCase==2) { applyMtrxPt3(p3Dummy,xzSwpMtrx);};
-// 8. MATRIX ROTATION: 
+//5. MATRIX ROTATION: 
       applyMtrxPt3(p3Dummy,pitchMtrx);
       applyMtrxPt3(p3Dummy,yawMtrx);
-// 9. Cast Ray
+//6. Cast Ray
       Pt2 px = {xi,yi};
       castRay(p3Dummy, px);
     };
@@ -287,15 +308,6 @@ void buildScene() {
   TRI[6] = RoofA;
   TRI[7] = RoofB;
   TRI[8] = RoofC;
-};
-
-void buildUI() {
-  Pt2 pUIa = {0,0}, pUIb = {floor(xDim/2),0}, pUIc = {xDim-1,0};
-  Pt2 pUId = {0,floor(yDim/2)}, pUIe = {xDim-1,floor(yDim/2)};
-  Pt2 pUIf = {0,yDim-1}, pUIg = {floor(xDim/2),yDim-1}, pUIh = {xDim-1,yDim-1};
-  drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
-  drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
-  drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
 };
 
 /*-----------------> PROG <-----------------*/
@@ -356,7 +368,8 @@ int parse(char cmd[]) {
   if (cmd[0]=='i') { return 6;} else
   if (cmd[0]=='k') { return 7;} else
   if (cmd[0]=='j') { return 8;} else
-  if (cmd[0]=='l') { return 9;};
+  if (cmd[0]=='l') { return 9;} else
+  if (cmd[0]=='S') { return 10;};
   return 0;
 };
 
@@ -368,7 +381,8 @@ void run(int code) {
   if (code==6) {walkForward(2.5);} else
   if (code==7) {walkForward(-2.5);} else
   if (code==8) {walkRight(-2.5);} else
-  if (code==9) {walkRight(2.5);};
+  if (code==9) {walkRight(2.5);} else
+  if (code=10) {saveData();};
   return;
 };
 
