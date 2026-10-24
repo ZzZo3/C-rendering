@@ -20,6 +20,9 @@
 #define MAXINPUT 64
 #define triL 9
 #define camHeight 5
+#define COMMANDSCOUNT 12
+#define MAXPARAML 16
+#define MAXPARAMS 16
 
 /*-----------------> UTIL <-----------------*/
 
@@ -87,18 +90,33 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[2] = A[0]*B[1]-A[1]*B[0];
 };
 
+char* strtokat(const char *str, const char *delim, int index) {
+  if (!str||index<0) return NULL;
+  char *strcopy = strdup(str);
+  if (!strcopy) return NULL;
+  char *token = strtok(strcopy,delim);
+  for (int i=0; i<=index & token!=NULL; i++) {
+    if (i==index) {
+      char *result = strdup(token);
+      free(strcopy);
+      return result;
+    };
+    token = strtok(NULL,delim);
+  };
+  free(strcopy);
+  return NULL;
+};
+
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
 
 char* tmlScnSpcA; // screenspace
 char* tmlScnSpcB; // UI layer
 Pt3 CAM = {0,camHeight,0};
 Pt3 POS = {0,0,0};
-float pitch = 0; // Radians
-float yaw = 0;
+float yaw = 0, pitch = 0; // Radians
 float radius = 100; // render distance
 float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
-float yScale = 0.10; // [0..1] coef for dimensions of screenspace
-float xScale = 0.065;
+float xScale = 0.065, yScale = 0.10; // [0..1] coef for dimensions of screenspace
 
 int scnDims[2] = {xDim,yDim};
 
@@ -117,11 +135,22 @@ Pt3 TRINORM[triL];
 void saveData() {
   FILE* file;
   file = fopen("./data.txt","w");
-  if (file=NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
-  float b = 0.79832;
-  fprintf(file,"> hello zinc world...\n");
+  if (file==NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
+  fprintf(file,"POS:%f:%f:%f\n",POS[0],POS[1],POS[2]);
+  fprintf(file,"YAW/PITCH:%f:%f\n",yaw,pitch);
   fclose(file);
   printf("data saved.\n");
+};
+
+void loadData() {
+  FILE* file;
+  file = fopen("./data.txt","r");
+  char buffer[256];
+  while(fgets(buffer,sizeof(buffer),file) != NULL) {
+    printf("%s",buffer);
+  };
+  fclose(file);
+  printf("data loaded.\n");
 };
 
 /*-----------------> MATRIX <-----------------*/
@@ -174,7 +203,6 @@ void emptyTmlScnSpc() {
 void writeTxtLine(Pt2 corner, char txt[], int length, int size) {
   for (int cursor=0; cursor<length; cursor++) {
     /*...*/
-    printf("hello");
     Pt2 a = {corner[0]+(size*cursor),corner[1]};
     Pt2 b = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
     drawLine(tmlScnSpcB,a,b,'X');
@@ -311,7 +339,7 @@ void buildScene() {
   TRI[8] = RoofC;
 };
 
-/*-----------------> PROG <-----------------*/
+/*-----------------> UTIL 2 <-----------------*/
 
 void startup() {
   tmlScnSpcA=(char*)malloc(xDim*yDim);
@@ -332,6 +360,7 @@ void startup() {
     for (int j=0; j<3; j++) { TRINORM[i][j]=n[j];};
     TRINORM[i][3] = dot(n,a);
   };
+  return;
 };
 
 void render() {
@@ -341,40 +370,39 @@ void render() {
   castNet();
   buildUI();
   printTml();
+  return;
 };
 
-void pitchUp(float by) { pitch+=by;render();};
-void yawLeft(float by) { yaw+=by;render();};
+/*-----------------> COMMAND FUNCTIONS <-----------------*/
+
+void pitchUp(float by) { pitch+=by;render();return;};
+
+void yawLeft(float by) { yaw+=by;render();return;};
+
 void walkForward(float by) {
   Pt3 unitZ = {0,0,by};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
   render();
+  return;
 };
+
 void walkRight(float by) {
   Pt3 unitZ = {by,0,0};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
   render();
+  return;
 };
 
-int parse(char cmd[]) {
-  if (cmd[0]=='x') { return 1;} else
-  if (cmd[0]=='w') { return 2;} else
-  if (cmd[0]=='s') { return 3;} else
-  if (cmd[0]=='a') { return 4;} else
-  if (cmd[0]=='d') { return 5;} else
-  if (cmd[0]=='i') { return 6;} else
-  if (cmd[0]=='k') { return 7;} else
-  if (cmd[0]=='j') { return 8;} else
-  if (cmd[0]=='l') { return 9;} else
-  if (cmd[0]=='S') { return 10;};
-  return 0;
-};
+/*-----------------> COMMAND PARSING <-----------------*/
 
-void run(int code) {
+char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test"};
+int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,0,0,2};
+
+void run(int code, char parameters[][16]) {
   if (code==2) {pitchUp(-3.1415/32);} else
   if (code==3) {pitchUp(3.1415/32);} else
   if (code==4) {yawLeft(3.1415/32);} else
@@ -383,7 +411,56 @@ void run(int code) {
   if (code==7) {walkForward(-2.5);} else
   if (code==8) {walkRight(-2.5);} else
   if (code==9) {walkRight(2.5);} else
-  if (code=10) {saveData();};
+  if (code==10) {saveData();} else
+  if (code==11) {loadData();} else
+  if (code==12) {printf("test:%s,%f",parameters[0],parameters[1]);};
+  return;
+};
+
+/*runs:name:param:param:param*/
+
+void parse(char cmd[]) {
+  printf("%s\n",cmd);
+  return;
+  int segments=0, runs=1, start=0, code=0;
+  for (int i=0; cmd[i]; i++) { if (cmd[i]==':') {segments++;};};
+//1. Check For >1 Runs (Int as First Segment)
+  char *token=strtokat(cmd,":",0);
+  char *end;
+  int _runs = (int)strtol(token, &end, 10);
+  if (end!=NULL) { runs=_runs; start=1;};
+  free(end);
+//2. Get Command Code
+  token=strtokat(cmd,":",start);
+  for (int i=0; i<COMMANDSCOUNT; i++) { if (strcmp(cmd,commands[i])==0) { code=i+1;};};
+//3. Get Parameters
+  int paramCount = commandParamCounts[code-1];
+  char parameters[MAXPARAML][MAXPARAMS];
+  if (segments-start-1!=paramCount) {
+    //printf("ERROR: incorrect parameter count\n");
+    free(token);
+    return;
+  };
+  for (int i=start+1; i<segments; i++) {
+    token=strtokat(cmd,":",i);
+    for (int j=0; i<strlen(token); j++) {
+      parameters[i][j] = token[j];
+    };
+  };
+  run(code,parameters);
+  free(token);
+  return;
+};
+
+void parseL(char line[MAXINPUT]) {
+  char *cmdPtr=strtok(line," ");
+  while (cmdPtr!=NULL) {
+    parse(cmdPtr);
+    //printf("%s\n",cmdPtr);
+    cmdPtr=strtok(NULL," ");
+    if (cmdPtr==NULL) { printf("hit NULL");};
+  };
+  free(cmdPtr);
   return;
 };
 
@@ -397,33 +474,7 @@ int main() {
     char input[MAXINPUT];
     printf("> ");
     scanf(" %[^\n]",input);
-    int commandSeparateIndexes[MAXINPUT];
-    int commandCount=0;
-    for (int i=0; i<strlen(input); i++){ if (input[i]==' ') {
-      commandSeparateIndexes[commandCount]=i;
-      commandCount++;
-    } else { commandSeparateIndexes[i]=0;};};
-    int parseCursorA=0, parseCursorB=0;
-    int runs=1;
-// parse commands in line
-    for (int i=0; i<commandCount; i++) {
-      while (parseCursorB<=commandSeparateIndexes[i]) { parseCursorB++;};
-      int length = parseCursorB - parseCursorA - 1;
-      char command[MAXINPUT];
-      strncpy(command, input+parseCursorA, length);
-      command[length] = '\0';
-      char *endPtr;
-      long int num;
-      num = strtol(command, &endPtr, 10);
-      if (endPtr!=command || *endPtr=='\0') { runs=num;};
-      int code = parse(command);
-      if (code==1) { running=false;}
-      else if (code!=0) { 
-        for (int runi=0; runi<runs; runi++) { run(code);};
-        runs = 1;
-      };
-      parseCursorA = parseCursorB;
-    };
+    parseL(input);
   };
   return 0;
 };
