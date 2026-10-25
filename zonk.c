@@ -94,28 +94,41 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
 char* strtokat(const char *_str, const char *delim, int index) {
   if (!_str||!delim||index<0) return NULL;
 //printf("_str,delim,index: %s,%s,%d\n",_str,delim,index); 
-  
   char *strc = strdup(_str);
   if (!strc) return NULL;
 //printf("strc: %s\n",strc);
-  
   int i=0;
   char *target_token = NULL;
-
   char *token = strtok(strc,delim);
   while (token!=NULL) {
 //printf("token: %s\n",token);
     if (i==index) {
       target_token = strdup(token);
-
       break;
     };
     i++;
     token = strtok(NULL,delim);
   };
-
   return target_token;
 };
+
+/*float strtof(const char *str, int base) {
+  float val;
+  char *end;
+  if (!str||!end||base<2) return NAN;
+  long _val = strtol(str,&end,base);
+  if (str==end) return NAN;
+ printf("moat 1\n");
+  while (*end!='\0') {
+ printf("moat 2\n");
+    if (!isspace((unsigned char)*end)) return NAN;
+    end++;
+  };
+  val = (float)_val;
+  free(end);
+ printf("moat 3\n");
+  return val;
+};*/
 
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
 
@@ -152,15 +165,50 @@ void saveData() {
   printf("data saved.\n");
 };
 
-void loadData() {
+int loadData() {
   FILE* file;
   file = fopen("./data.txt","r");
   char buffer[256];
+  char *token;
+  char *id;
+  float _f;
+  bool dataSuccess = true;
   while(fgets(buffer,sizeof(buffer),file) != NULL) {
-    printf("%s",buffer);
+    printf("raw-%s",buffer);
+    id = strtokat(buffer,":",0);
+    printf("id: %s\n",id);
+    if (strcmp(id,"POS")==0) {
+      printf("->POS");
+      for (int i=0; dataSuccess&i<3; i++) {
+        token=strtokat(buffer,":",i+1);
+        _f=strtof(token,NULL);
+        if (_f!=_f) dataSuccess=false;
+        else POS[i]=_f;
+        printf(":%f",_f);
+      };
+      printf("\n");
+    } else if (strcmp(id,"YAW/PITCH")==0) {
+      printf("->YAW/PITCH");
+      token=strtokat(buffer,":",1);
+      _f=strtof(token,NULL);
+      if (_f!=_f) dataSuccess=false;
+      else yaw=_f;
+      printf(":%f",_f);
+      token=strtokat(buffer,":",2);
+      _f=strtof(token,NULL);
+      if (_f!=_f) dataSuccess=false;
+      else pitch=_f;
+      printf(":%f\n",_f);
+    };
   };
   fclose(file);
+  free(token);free(id);
+  if (!dataSuccess) {
+    printf("data failed to load.\n");
+    return -1;
+  };
   printf("data loaded.\n");
+  return 0;
 };
 
 /*-----------------> MATRIX <-----------------*/
@@ -424,12 +472,10 @@ int run(int code, char parameters[][16]) {
   if (code==8) {walkRight(-2.5);} else
   if (code==9) {walkRight(2.5);} else
   if (code==10) {saveData();} else
-  if (code==11) {loadData();} else
+  if (code==11) {if (loadData()==0) render();} else
   if (code==12) {printf("test->{%s,%s}\n",parameters[0],parameters[1]);};
   return code;
 };
-
-/*runs:name:param:param:param*/
 
 int parse(char _cmd[]) {
 // 0. Setup
@@ -449,9 +495,9 @@ int parse(char _cmd[]) {
   if (!token) {free(token);free(cmd);return 0;};
  //printf("first runs seg: %s\n",token);
   char *end;
-  long _runs = strtol(token, &end, 10);
+  long _runs=strtol(token, &end, 10);
  //printf("_runs: %d\n",_runs);
-  bool changeRuns = true;
+  bool changeRuns=true;
   if (end==token) changeRuns=false;
   while (*end!='\0') {
     if (!isspace((unsigned char)*end)) changeRuns=false;
@@ -526,5 +572,11 @@ int main() {
 //printf("code: %d\n",code);
     if (code==1) running=false;
   };
+  /*char text[] = "56.54";
+ printf("moat a\n");
+  float f = strtof(text,NULL);
+ printf("moat b\n");
+  if (f==f) printf("f: %f\n",f);
+ printf("moat c\n");*/
   return 0;
 };
