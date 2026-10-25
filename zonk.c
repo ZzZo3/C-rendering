@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 
 /*-----------------> NOTICE <-----------------*/
 /*
@@ -90,21 +91,30 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
   C[2] = A[0]*B[1]-A[1]*B[0];
 };
 
-char* strtokat(const char *str, const char *delim, int index) {
-  if (!str||index<0) return NULL;
-  char *strcopy = strdup(str);
-  if (!strcopy) return NULL;
-  char *token = strtok(strcopy,delim);
-  for (int i=0; i<=index & token!=NULL; i++) {
+char* strtokat(const char *_str, const char *delim, int index) {
+  if (!_str||!delim||index<0) return NULL;
+//printf("_str,delim,index: %s,%s,%d\n",_str,delim,index); 
+  
+  char *strc = strdup(_str);
+  if (!strc) return NULL;
+//printf("strc: %s\n",strc);
+  
+  int i=0;
+  char *target_token = NULL;
+
+  char *token = strtok(strc,delim);
+  while (token!=NULL) {
+//printf("token: %s\n",token);
     if (i==index) {
-      char *result = strdup(token);
-      free(strcopy);
-      return result;
+      target_token = strdup(token);
+
+      break;
     };
+    i++;
     token = strtok(NULL,delim);
   };
-  free(strcopy);
-  return NULL;
+
+  return target_token;
 };
 
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
@@ -402,7 +412,9 @@ void walkRight(float by) {
 char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test"};
 int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,0,0,2};
 
-void run(int code, char parameters[][16]) {
+int run(int code, char parameters[][16]) {
+//printf("running: %d\n",code);
+  if (code==1) {printf("exiting.\n");} else
   if (code==2) {pitchUp(-3.1415/32);} else
   if (code==3) {pitchUp(3.1415/32);} else
   if (code==4) {yawLeft(3.1415/32);} else
@@ -413,55 +425,91 @@ void run(int code, char parameters[][16]) {
   if (code==9) {walkRight(2.5);} else
   if (code==10) {saveData();} else
   if (code==11) {loadData();} else
-  if (code==12) {printf("test:%s,%f",parameters[0],parameters[1]);};
-  return;
+  if (code==12) {printf("test->{%s,%s}\n",parameters[0],parameters[1]);};
+  return code;
 };
 
 /*runs:name:param:param:param*/
 
-void parse(char cmd[]) {
-  printf("%s\n",cmd);
-  return;
-  int segments=0, runs=1, start=0, code=0;
-  for (int i=0; cmd[i]; i++) { if (cmd[i]==':') {segments++;};};
-//1. Check For >1 Runs (Int as First Segment)
-  char *token=strtokat(cmd,":",0);
+int parse(char _cmd[]) {
+// 0. Setup
+  char *cmd = strdup(_cmd);
+ //printf("cmd: %s\n",cmd);
+  int segments=1, runs=1, code=0;
+  for (int i=0; i<strlen(cmd); i++) if (cmd[i]==':') segments++;
+ //printf("segments: %d\n",segments);
+//1. Check For Runs (Int as First Segment)
+  int slashes=0;
+  for (int i=0; i<strlen(cmd); i++) if (cmd[i]=='/') slashes++;
+  if (slashes!=0&slashes!=1) {
+    printf("ERROR: too many '/' in command.");
+    free(cmd);return 0;
+  };
+  char *token=strtokat(cmd,"/",0);
+  if (!token) {free(token);free(cmd);return 0;};
+ //printf("first runs seg: %s\n",token);
   char *end;
-  int _runs = (int)strtol(token, &end, 10);
-  if (end!=NULL) { runs=_runs; start=1;};
-  free(end);
-//2. Get Command Code
-  token=strtokat(cmd,":",start);
-  for (int i=0; i<COMMANDSCOUNT; i++) { if (strcmp(cmd,commands[i])==0) { code=i+1;};};
-//3. Get Parameters
+  long _runs = strtol(token, &end, 10);
+ //printf("_runs: %d\n",_runs);
+  bool changeRuns = true;
+  if (end==token) changeRuns=false;
+  while (*end!='\0') {
+    if (!isspace((unsigned char)*end)) changeRuns=false;
+    end++;
+  };
+  if (_runs<=0) changeRuns=false;
+  if (changeRuns) { runs=(int)_runs;};
+ //printf("runs: %d\n",runs);
+//2 Remove Leading Int
+  if (changeRuns) {
+    token=strtokat(cmd,"/",1);
+    if (token!=NULL) cmd=token;
+  };
+ //printf("new cmd: %s\n",cmd);
+//3. Get Command Code
+  token=strtokat(cmd,":",0);
+  if (!token) {free(token);free(cmd);return 0;};
+ //printf("cmd token: %s\n",token);
+  for (int i=0; i<COMMANDSCOUNT; i++) { if (strcmp(token,commands[i])==0) { code=i+1;};};
+  if (code<1) {
+    printf("ERROR: unrecognized command.\n");
+    free(token);free(cmd);return 0;
+  };
+ //printf("code: %d\n",code);
+//4. Get Parameters
   int paramCount = commandParamCounts[code-1];
+ //printf("paramCount: %d\n",paramCount);
   char parameters[MAXPARAML][MAXPARAMS];
-  if (segments-start-1!=paramCount) {
-    //printf("ERROR: incorrect parameter count\n");
-    free(token);
-    return;
+  if (segments-1!=paramCount) {
+    printf("ERROR: incorrect parameter count\n");
+    free(token);free(cmd);return 0;
   };
-  for (int i=start+1; i<segments; i++) {
+  for (int i=1; i<segments; i++) {
     token=strtokat(cmd,":",i);
-    for (int j=0; i<strlen(token); j++) {
-      parameters[i][j] = token[j];
-    };
+    strcpy(parameters[i-1],token);
   };
-  run(code,parameters);
-  free(token);
-  return;
+  for (int i=0; i<runs; i++) code=run(code,parameters);
+  free(token);free(cmd);return code;
 };
 
-void parseL(char line[MAXINPUT]) {
-  char *cmdPtr=strtok(line," ");
-  while (cmdPtr!=NULL) {
-    parse(cmdPtr);
-    //printf("%s\n",cmdPtr);
-    cmdPtr=strtok(NULL," ");
-    if (cmdPtr==NULL) { printf("hit NULL");};
+int parseL(char line[MAXINPUT]) {
+  int _code, code=0, spaces=0;
+  for (int i=0; i<strlen(line); i++) if (line[i]==' ') spaces++;
+ //printf("spaces: %d\n",spaces);
+  char *cmdPtr;
+  if (spaces==0) {
+    cmdPtr = strdup(line);
+    _code = parse(cmdPtr);
+    if (_code==1) code=1;
+  } else {
+    for (int i=0; i<=spaces; i++) {
+      cmdPtr=strtokat(line," ",i);
+      _code = parse(cmdPtr);
+      if (_code==1) code=1;
+    };
   };
   free(cmdPtr);
-  return;
+  return code;
 };
 
 /*-----------------> MAIN <-----------------*/
@@ -474,7 +522,9 @@ int main() {
     char input[MAXINPUT];
     printf("> ");
     scanf(" %[^\n]",input);
-    parseL(input);
+    int code = parseL(input);
+//printf("code: %d\n",code);
+    if (code==1) running=false;
   };
   return 0;
 };
