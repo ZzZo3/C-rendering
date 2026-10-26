@@ -150,15 +150,21 @@ int loadData() {
     id = strtokat(buffer,":",0);
     printf("id: %s\n",id);
     if (strcmp(id,"POS")==0) {
+
       printf("->POS");
       for (int i=0; dataSuccess&i<3; i++) {
         token=strtokat(buffer,":",i+1);
         _f=strtof(token,NULL);
         if (_f!=_f) dataSuccess=false;
-        else POS[i]=_f;
+        else {
+          POS[i]=_f;
+          CAM[i]=_f;
+          if (i==1) CAM[i]+=camHeight;
+        };
         printf(":%f",_f);
       };
       printf("\n");
+
     } else if (strcmp(id,"YAW/PITCH")==0) {
       printf("->YAW/PITCH");
       token=strtokat(buffer,":",1);
@@ -246,13 +252,20 @@ void emptyTmlScnSpc() {
   };
 };
 
-void writeTxtLine(Pt2 corner, char txt[], int length, int size) {
+void UItxt(Pt2 corner, char txt[], int size) {
+  int length = strlen(txt);
+  FILE *font;
+  font = fopen("./font.txt","r");
+  //char *ptr;
+  //ptr = fgets(ptr,...,font)
   for (int cursor=0; cursor<length; cursor++) {
     /*...*/
     Pt2 a = {corner[0]+(size*cursor),corner[1]};
     Pt2 b = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
     drawLine(tmlScnSpcB,a,b,'X');
   };
+  fclose(font);
+  return;
 };
 
 void buildUI() {
@@ -264,7 +277,7 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
   Pt2 _corner = {10,10};
   char _text[5] = "hello";
-  writeTxtLine(_corner,_text,5,6);
+  UItxt(_corner,_text,6);
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -361,15 +374,15 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,1}/*{1,0.15}*/};
-  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,1}/*{1,0.15}*/};
-  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{1,1}/*{0,1}*/};
-  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{1,1}/*{0,0.5}*/};
-  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{1,1}/*{0,1}*/};
-  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{1,1}/*{0,0.5}*/};
-  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{1,1}/*{0,1}*/};
-  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{1,1}/*{0,1}*/};
-  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{1,1}/*{0,0.5}*/};
+  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}};
+  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}};
+  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{0,1}};
+  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}};
+  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{0,1}};
+  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
+  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
+  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
+  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{0,0.5}};
   struct Tri3 TestA = {{-10,0,25},{0,10,25},{0,0,25},{1,1}};
   struct Tri3 TestB = {{-10,0,25},{0,10,25},{-10,10,25},{1,1}};
   TRI[0] = FloorA;
@@ -379,8 +392,8 @@ void buildScene() {
   TRI[4] = HouseC;
   TRI[5] = HouseD;
   TRI[6] = RoofA;
-  TRI[7] = TestA;
-  TRI[8] = TestB;
+  TRI[7] = RoofB;
+  TRI[8] = RoofC;
 };
 
 /*-----------------> UTIL 2 <-----------------*/
