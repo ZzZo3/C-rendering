@@ -211,12 +211,12 @@ void drawLine(char* ARRAY, Pt2 a, Pt2 b, char fill) {
 };
 
 void tmlLine() {
-  for (int i=0; i<xDim+2; i++) printf("-");
+  for (int i=0; i<xDim+6; i++) printf("=");
   printf("\n");
 };
 
 void printScnPt(int x, int y) {
-  if (tmlScnSpcB[y*xDim+x]==' ') printf("%c",tmlScnSpcA[y*xDim+x]); return;
+  if (tmlScnSpcB[y*xDim+x]==' ') {printf("%c",tmlScnSpcA[y*xDim+x]); return;};
   printf("%c",tmlScnSpcB[y*xDim+x]);
   return;
 };
@@ -320,10 +320,9 @@ void castRay(Pt3 RAY, Pt2 px) {
 };
 
 void  castNet(){
-  int xi=0, yi=-1;
+  int xi=0, yi=0;
   for(int m=0; m<yDim*xDim; m++) {
-    xi=m%xDim;
-    if (xi==0) yi++;
+    if (xi<xDim) {xi++;} else {xi=0;yi++;};
 //0. Generate Pt3 for pixel
     Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
 //1. Apply Screenspace Transform
