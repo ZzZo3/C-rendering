@@ -16,7 +16,7 @@
 /*-----------------> CONSTANTS <-----------------*/
 
 #define yDim /*65*/  117
-#define xDim /*211*/ 375
+#define xDim /*211*/ 373
 #define gradL 14
 #define MAXINPUT 64
 #define triL 9
@@ -224,7 +224,9 @@ void printScnPt(int x, int y) {
 void printTml() {
   tmlLine();
   for(int yi=0; yi<yDim; yi++) {
-    printf("|");
+    if (yi<10) printf("|%d  |",yi);
+    else if (yi<100) printf("|%d |",yi);
+    else printf("|%d|",yi);
     for (int xi=0; xi<xDim; xi++) printScnPt(xi, yi);
     printf("|\n");
   }
@@ -232,9 +234,15 @@ void printTml() {
 };
 
 void emptyTmlScnSpc() {
-  for(int m=0; m<yDim*xDim; m++) {
+  /*for(int m=0; m<yDim*xDim; m++) {
     tmlScnSpcA[m]=' ';
     tmlScnSpcB[m]=' ';
+  };*/
+  for (int yi=0; yi<yDim; yi++) {
+    for (int xi=0; xi<xDim; xi++) {
+      tmlScnSpcA[yi*xDim+xi]=' ';
+      tmlScnSpcB[yi*xDim+xi]=' ';
+    };
   };
 };
 
@@ -276,7 +284,7 @@ void castRay(Pt3 RAY, Pt2 px) {
       n[j] = TRINORM[i][j];
     };
     double t = dot(a,n)/dot(n,RAY);
-    for (int j=0; j<3; j++) { T[j]=RAY[j]*t;};
+    for (int j=0; j<3; j++) T[j]=RAY[j]*t;
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
@@ -312,8 +320,10 @@ void castRay(Pt3 RAY, Pt2 px) {
 };
 
 void  castNet(){
+  int xi=0, yi=-1;
   for(int m=0; m<yDim*xDim; m++) {
-    int xi=m%xDim, yi=(m-xi)/xDim;
+    xi=m%xDim;
+    if (xi==0) yi++;
 //0. Generate Pt3 for pixel
     Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
 //1. Apply Screenspace Transform
@@ -352,15 +362,17 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}};
-  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}};
-  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{0,1}};
-  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}};
-  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{0,1}};
-  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
-  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
-  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
-  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{0,0.5}};
+  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,1}/*{1,0.15}*/};
+  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,1}/*{1,0.15}*/};
+  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{1,1}/*{0,1}*/};
+  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{1,1}/*{0,0.5}*/};
+  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{1,1}/*{0,1}*/};
+  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{1,1}/*{0,0.5}*/};
+  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{1,1}/*{0,1}*/};
+  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{1,1}/*{0,1}*/};
+  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{1,1}/*{0,0.5}*/};
+  struct Tri3 TestA = {{-10,0,25},{0,10,25},{0,0,25},{1,1}};
+  struct Tri3 TestB = {{-10,0,25},{0,10,25},{-10,10,25},{1,1}};
   TRI[0] = FloorA;
   TRI[1] = FloorB;
   TRI[2] = HouseA;
@@ -368,8 +380,8 @@ void buildScene() {
   TRI[4] = HouseC;
   TRI[5] = HouseD;
   TRI[6] = RoofA;
-  TRI[7] = RoofB;
-  TRI[8] = RoofC;
+  TRI[7] = TestA;
+  TRI[8] = TestB;
 };
 
 /*-----------------> UTIL 2 <-----------------*/
