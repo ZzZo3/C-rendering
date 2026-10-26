@@ -252,19 +252,46 @@ void emptyTmlScnSpc() {
   };
 };
 
-void UItxt(Pt2 corner, char txt[], int size) {
-  int length = strlen(txt);
+char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTVUWXYZ1234567890-. ";
+
+void UItxt(Pt2 corner, char txt[], int size, int spacing) {
   FILE *font;
-  font = fopen("./font.txt","r");
-  //char *ptr;
-  //ptr = fgets(ptr,...,font)
-  for (int cursor=0; cursor<length; cursor++) {
-    /*...*/
-    Pt2 a = {corner[0]+(size*cursor),corner[1]};
-    Pt2 b = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
-    drawLine(tmlScnSpcB,a,b,'X');
+  char buffer[200];
+  char *end;
+  for (int cursor=0; cursor<strlen(txt); cursor++) {
+
+    font = fopen("./font.txt","r");
+    int fontLinesCount=0;
+    char c;
+    for (c=fgetc(font);c!=EOF;c=fgetc(font)) {
+      if (c=='\n') fontLinesCount++;
+    };
+    fclose(font);
+
+    font = fopen("./font.txt","r");
+    int fileLine=0;
+    while (fileLine<=fontLinesCount & (int)strtof(buffer,&end)!=size) {fgets(buffer,sizeof(buffer),font);fileLine++;};
+    if (fileLine==fontLinesCount) {printf("ERROR: UItxt [size] not found."); return;};
+
+    int _l=0;
+    for (int _guard=0; _l<sizeof(fontCharArr)/sizeof(char) & toupper(txt[cursor])!=fontCharArr[_l]; _guard++) _l++;
+   printf("_l: %d | toupper(txt[cursor]): %c | fontCharArr[_l]: %c\n",_l,toupper(txt[cursor]),fontCharArr[_l]);
+
+    for (int yi=0; yi<size; yi++) {
+      fgets(buffer,sizeof(buffer),font);
+      int y = corner[1]+yi;
+      for (int xi=0; xi<size; xi++) {
+        int x = corner[0]+((size+spacing)*cursor)+xi;
+        tmlScnSpcB[y*xDim+x] = buffer[_l*size+xi];
+      };
+    };
+
+    fclose(font);
+
+    /*Pt2 tmlA = {corner[0]+(size*cursor),corner[1]};
+    Pt2 tmlB = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
+    drawLine(tmlScnSpcB,a,b,'X');*/
   };
-  fclose(font);
   return;
 };
 
@@ -276,8 +303,8 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
   Pt2 _corner = {10,10};
-  char _text[5] = "hello";
-  UItxt(_corner,_text,6);
+  char _text[] = "hello zinc world...";
+  UItxt(_corner,_text,5,1);
 };
 
 /*-----------------> SCENE <-----------------*/
