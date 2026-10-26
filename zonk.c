@@ -6,9 +6,9 @@
 
 /*-----------------> NOTICE <-----------------*/
 /*
-  A MATRIX SHALL BE DEFINED AND REFERENCED WITH "M[column][row]". -> float M[3][3] = {{1,4,7},{2,5,8},{3,6,9}};
-  A POINT 2 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 2 COLUMNS.  -> float P2[1][2] = {{x,y}};
-  A POINT 3 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 3 COLUMNS.  -> float P3[1][3] = {{x,y,z}};
+  A MATRIX SHALL BE DEFINED AND REFERENCED WITH "M[column][row]". -> double M[3][3] = {{1,4,7},{2,5,8},{3,6,9}};
+  A POINT 2 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 2 COLUMNS.  -> double P2[1][2] = {{x,y}};
+  A POINT 3 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 3 COLUMNS.  -> double P3[1][3] = {{x,y,z}};
       |1 2 3|        |x|        |x|
   M = |4 5 6| ; P2 = |y| ; P3 = |y|
       |7 8 9|                   |z|
@@ -28,9 +28,9 @@
 /*-----------------> UTIL <-----------------*/
 
 typedef int Pt2[2];
-typedef float Pt3[3];
-typedef float Mtrx33[9];
-typedef float ObjShade[2];
+typedef double Pt3[3];
+typedef double Mtrx33[9];
+typedef double ObjShade[2];
 /* ObjShade Table
 0|Mono        |Value
 1|Distance    |Multiplier
@@ -42,29 +42,22 @@ struct Tri3 {
   ObjShade shade;
 };
 
-int pol(float v) {
-  if (v>0) { return 1;};
-  if (v<0) { return -1;};
+int pol(double v) {
+  if (v>0) return 1;
+  if (v<0) return -1;
   return 0;
 };
 
-int polBin(float v) {
-  if (v<0) { return -1;};
+int polBin(double v) {
+  if (v<0) return -1;
   return 1;
 };
 
-void termLine() {
-  for (int i=0; i<xDim+2; i++) {
-    printf("-");
-  };
-  printf("\n");
-};
-
-float distA(Pt3 A) {
+double distA(Pt3 A) {
   return sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]);
 };
 
-float distAB(Pt3 A, Pt3 B) {
+double distAB(Pt3 A, Pt3 B) {
   return sqrt((A[0]-B[0])*(A[0]-B[0])+(A[1]-B[1])*(A[1]-B[1])+(A[2]-B[2])*(A[2]-B[2]));
 };
 
@@ -72,16 +65,16 @@ void applyMtrxPt3(Pt3 M31, Mtrx33 M33) {
   Pt3 result;
   for (int colR=0; colR<3; colR++) {
     result[colR] = 0;
-    for (int i=0; i<3; i++) { result[colR] += M31[i]*M33[3*i+colR];};
+    for (int i=0; i<3; i++) result[colR] += M31[i]*M33[3*i+colR];
   };
-  for (int i=0; i<3; i++) { M31[i] = result[i];};
+  for (int i=0; i<3; i++) M31[i] = result[i];
 };
 
-float dot(Pt3 A, Pt3 B) {
+double dot(Pt3 A, Pt3 B) {
   return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]);
 };
 
-float dotNorm(Pt3 A, Pt3 B) {
+double dotNorm(Pt3 A, Pt3 B) {
   return (A[0]*B[0]+A[1]*B[1]+A[2]*B[2]) / (distA(A)*distA(B));
 }
 
@@ -93,15 +86,12 @@ void cross(Pt3 A, Pt3 B, Pt3 C) {
 
 char* strtokat(const char *_str, const char *delim, int index) {
   if (!_str||!delim||index<0) return NULL;
-//printf("_str,delim,index: %s,%s,%d\n",_str,delim,index); 
   char *strc = strdup(_str);
   if (!strc) return NULL;
-//printf("strc: %s\n",strc);
   int i=0;
   char *target_token = NULL;
   char *token = strtok(strc,delim);
   while (token!=NULL) {
-//printf("token: %s\n",token);
     if (i==index) {
       target_token = strdup(token);
       break;
@@ -112,34 +102,16 @@ char* strtokat(const char *_str, const char *delim, int index) {
   return target_token;
 };
 
-/*float strtof(const char *str, int base) {
-  float val;
-  char *end;
-  if (!str||!end||base<2) return NAN;
-  long _val = strtol(str,&end,base);
-  if (str==end) return NAN;
- printf("moat 1\n");
-  while (*end!='\0') {
- printf("moat 2\n");
-    if (!isspace((unsigned char)*end)) return NAN;
-    end++;
-  };
-  val = (float)_val;
-  free(end);
- printf("moat 3\n");
-  return val;
-};*/
-
 /*-----------------> PREDEFINED VARIABLES <-----------------*/
 
 char* tmlScnSpcA; // screenspace
 char* tmlScnSpcB; // UI layer
 Pt3 CAM = {0,camHeight,0};
 Pt3 POS = {0,0,0};
-float yaw = 0, pitch = 0; // Radians
-float radius = 100; // render distance
-float pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
-float xScale = 0.065, yScale = 0.10; // [0..1] coef for dimensions of screenspace
+double yaw = 0, pitch = 0; // Radians
+double radius = 100; // render distance
+double pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
+double xScale = 0.065, yScale = 0.10; // [0..1] coef for dimensions of screenspace
 
 int scnDims[2] = {xDim,yDim};
 
@@ -166,12 +138,12 @@ void saveData() {
 };
 
 int loadData() {
-  FILE* file;
+  FILE *file;
   file = fopen("./data.txt","r");
   char buffer[256];
   char *token;
   char *id;
-  float _f;
+  double _f;
   bool dataSuccess = true;
   while(fgets(buffer,sizeof(buffer),file) != NULL) {
     printf("raw-%s",buffer);
@@ -218,44 +190,52 @@ void drawPoint(char* ARRAY, Pt2 p, char fill) { ARRAY[p[1]*xDim+p[0]] = fill;};
 void drawLine(char* ARRAY, Pt2 a, Pt2 b, char fill) {
   bool sortX = b[0] > a[0], sortY = b[1] > a[1];
   bool vert = a[0] == b[0], horz = a[1] == b[1];
-  bool shallow = ( fabs(((float)b[1] - a[1])/(b[0] - a[0])) <= 1.0 || horz ) && !vert;
+  bool shallow = ( fabs(((double)b[1] - a[1])/(b[0] - a[0])) <= 1.0 || horz ) && !vert;
   /*if ( !((sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert))) ) { };*/
   if ( !(sortX & sortY) & !(sortX & (shallow||horz)) & !(sortY & (!shallow||vert)) ) { Pt2 temp={b[0],b[1]};b=a;a=temp;};
   if (shallow) {
     for (int xi=a[0]; xi<=b[0]; xi++) {
-      float m = ((float)b[1]-a[1])/(b[0]-a[0]);
-      float y = m * (xi - a[0]) + a[1];
+      double m = ((double)b[1]-a[1])/(b[0]-a[0]);
+      double y = m * (xi - a[0]) + a[1];
       Pt2 pTemp = {xi,y+0.5};
       drawPoint(ARRAY,pTemp,fill);
     };
   } else {
     for (int yi=a[1]; yi<=b[1]; yi++) {
-      float m = ((float)b[0]-a[0])/(b[1]-a[1]);
-      float x = m * (yi-a[1]) + a[0];
+      double m = ((double)b[0]-a[0])/(b[1]-a[1]);
+      double x = m * (yi-a[1]) + a[0];
       Pt2 pTemp = {x+0.5,yi};
       drawPoint(ARRAY,pTemp,fill);
     };
   };
 };
 
+void tmlLine() {
+  for (int i=0; i<xDim+2; i++) printf("-");
+  printf("\n");
+};
+
+void printScnPt(int x, int y) {
+  if (tmlScnSpcB[y*xDim+x]==' ') printf("%c",tmlScnSpcA[y*xDim+x]); return;
+  printf("%c",tmlScnSpcB[y*xDim+x]);
+  return;
+};
+
 void printTml() {
-  termLine();
+  tmlLine();
   for(int yi=0; yi<yDim; yi++) {
     printf("|");
-    for (int xi=0; xi<xDim; xi++) {
-      if (tmlScnSpcB[yi*xDim+xi]==' ') {
-        printf("%c",tmlScnSpcA[yi*xDim+xi]);
-      } else {
-        printf("%c",tmlScnSpcB[yi*xDim+xi]);
-      };
-    };
+    for (int xi=0; xi<xDim; xi++) printScnPt(xi, yi);
     printf("|\n");
   }
-  termLine();
+  tmlLine();
 };
 
 void emptyTmlScnSpc() {
-  for(int y=0; y<yDim; y++) { for(int x=0; x<xDim; x++) { tmlScnSpcA[y*xDim+x]=' '; tmlScnSpcB[y*xDim+x]=' ';};};
+  for(int m=0; m<yDim*xDim; m++) {
+    tmlScnSpcA[m]=' ';
+    tmlScnSpcB[m]=' ';
+  };
 };
 
 void writeTxtLine(Pt2 corner, char txt[], int length, int size) {
@@ -283,7 +263,7 @@ void buildUI() {
 
 void castRay(Pt3 RAY, Pt2 px) {
   bool DP = false;
-  float value = 0.0;
+  double value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
   Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
   bool foundTRI = false;
@@ -295,28 +275,24 @@ void castRay(Pt3 RAY, Pt2 px) {
       c[j] = TRI[i].c[j]-CAM[j];
       n[j] = TRINORM[i][j];
     };
-    float t = dot(a,n)/dot(n,RAY);
+    double t = dot(a,n)/dot(n,RAY);
     for (int j=0; j<3; j++) { T[j]=RAY[j]*t;};
     for (int j=0; j<3; j++) {
       a[j]-=T[j];
       b[j]-=T[j];
       c[j]-=T[j];
     };
-    float inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
+    double inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
     if (inOutTheta>=2*M_PI&t>=0) {
       foundTRI=true;
       for (int j=0; j<2; j++) { shade[j]=TRI[i].shade[j];};
-      if (distA(T)<distA(Tfnl)) { for(int j=0; j<3; j++) { Tfnl[j]=T[j];};};
-    } else {
-      // outside of triangle (no render)
-    };
+      if (distA(T)<distA(Tfnl)) for(int j=0; j<3; j++) Tfnl[j]=T[j];
+    }
   };
   if (foundTRI) {
     value = (radius-distA(Tfnl))/radius;
     if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
   } else {
-     //value = fabs((RAY[0]+RAY[1])/(sqrt(3)*radius));
-     //if (fmodf(fabs(RAY[0]),10)<1.33 || fmodf(fabs(RAY[1]),10)<1.33 || fmodf(fabs(RAY[2]),10)<1.33) { value+=0.15;value*=2;}; 
     shade[0]=0.0;shade[1]=0.0;
   };
 //SHADING
@@ -336,41 +312,40 @@ void castRay(Pt3 RAY, Pt2 px) {
 };
 
 void  castNet(){
-  for(int yi=0; yi<yDim; yi++) {
-    for(int xi=0; xi<xDim; xi++) {
+  for(int m=0; m<yDim*xDim; m++) {
+    int xi=m%xDim, yi=(m-xi)/xDim;
 //0. Generate Pt3 for pixel
-      Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
+    Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
 //1. Apply Screenspace Transform
-      for (int i=0; i<2; i++) { if (p3Dummy[i]!=0) {
-        p3Dummy[i] += (2*pow(p3Dummy[i],3))/(fabs(p3Dummy[i])*scnDims[i]); p3Dummy[i]/=3;
-      };};
-      p3Dummy[1] *= -1;
+    for (int i=0; i<2; i++) { if (p3Dummy[i]!=0) {
+      p3Dummy[i] += (2*pow(p3Dummy[i],3))/(fabs(p3Dummy[i])*scnDims[i]); p3Dummy[i]/=3;
+    };};
+    p3Dummy[1] *= -1;
 //2. Get Slopes (X-Swaps?)
-      float tempF, dydx, dzdx;
-      int slopeCase = 0;
-      if (p3Dummy[0]==0) {
-        if (p3Dummy[1]!=0) { slopeCase=1; applyMtrxPt3(p3Dummy,xySwpMtrx);} else
-        if (p3Dummy[2]!=0) { slopeCase=2; applyMtrxPt3(p3Dummy,xzSwpMtrx);}
-        else { printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");return;};
-      };
-      dydx = p3Dummy[1]/p3Dummy[0];
-      dzdx = p3Dummy[2]/p3Dummy[0];
-//3. Extrude Ray to Sphere
-      float xOptA = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1));
-      float xOptB = -xOptA;
-      if (pol(p3Dummy[0])==pol(xOptA)) { p3Dummy[0]=xOptA;} else { p3Dummy[0]=xOptB;};
-      p3Dummy[1] = dydx*(p3Dummy[0]);
-      p3Dummy[2] = dzdx*(p3Dummy[0]);
-//4. Undo X-Swaps
-      if (slopeCase==1) { applyMtrxPt3(p3Dummy,xySwpMtrx);} else
-      if (slopeCase==2) { applyMtrxPt3(p3Dummy,xzSwpMtrx);};
-//5. MATRIX ROTATION: 
-      applyMtrxPt3(p3Dummy,pitchMtrx);
-      applyMtrxPt3(p3Dummy,yawMtrx);
-//6. Cast Ray
-      Pt2 px = {xi,yi};
-      castRay(p3Dummy, px);
+    double tempF, dydx, dzdx;
+    int slopeCase = 0;
+    if (p3Dummy[0]==0) {
+      if (p3Dummy[1]!=0) { slopeCase=1; applyMtrxPt3(p3Dummy,xySwpMtrx);} else
+      if (p3Dummy[2]!=0) { slopeCase=2; applyMtrxPt3(p3Dummy,xzSwpMtrx);}
+      else { printf("ERROR: castNet() failed due to pxTarget at {0,0,0}\n");return;};
     };
+    dydx = p3Dummy[1]/p3Dummy[0];
+    dzdx = p3Dummy[2]/p3Dummy[0];
+//3. Extrude Ray to Sphere
+    double xOptA = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1));
+    double xOptB = -xOptA;
+    if (pol(p3Dummy[0])==pol(xOptA)) { p3Dummy[0]=xOptA;} else { p3Dummy[0]=xOptB;};
+    p3Dummy[1] = dydx*(p3Dummy[0]);
+    p3Dummy[2] = dzdx*(p3Dummy[0]);
+//4. Undo X-Swaps
+    if (slopeCase==1) { applyMtrxPt3(p3Dummy,xySwpMtrx);} else
+    if (slopeCase==2) { applyMtrxPt3(p3Dummy,xzSwpMtrx);};
+//5. MATRIX ROTATION: 
+    applyMtrxPt3(p3Dummy,pitchMtrx);
+    applyMtrxPt3(p3Dummy,yawMtrx);
+//6. Cast Ray
+    Pt2 px = {xi,yi};
+    castRay(p3Dummy, px);
   };
 };
 
@@ -433,11 +408,11 @@ void render() {
 
 /*-----------------> COMMAND FUNCTIONS <-----------------*/
 
-void pitchUp(float by) { pitch+=by;render();return;};
+void pitchUp(double by) { pitch+=by;render();return;};
 
-void yawLeft(float by) { yaw+=by;render();return;};
+void yawLeft(double by) { yaw+=by;render();return;};
 
-void walkForward(float by) {
+void walkForward(double by) {
   Pt3 unitZ = {0,0,by};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
@@ -446,7 +421,7 @@ void walkForward(float by) {
   return;
 };
 
-void walkRight(float by) {
+void walkRight(double by) {
   Pt3 unitZ = {by,0,0};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
@@ -480,10 +455,8 @@ int run(int code, char parameters[][16]) {
 int parse(char _cmd[]) {
 // 0. Setup
   char *cmd = strdup(_cmd);
- //printf("cmd: %s\n",cmd);
   int segments=1, runs=1, code=0;
   for (int i=0; i<strlen(cmd); i++) if (cmd[i]==':') segments++;
- //printf("segments: %d\n",segments);
 //1. Check For Runs (Int as First Segment)
   int slashes=0;
   for (int i=0; i<strlen(cmd); i++) if (cmd[i]=='/') slashes++;
@@ -493,10 +466,8 @@ int parse(char _cmd[]) {
   };
   char *token=strtokat(cmd,"/",0);
   if (!token) {free(token);free(cmd);return 0;};
- //printf("first runs seg: %s\n",token);
   char *end;
   long _runs=strtol(token, &end, 10);
- //printf("_runs: %d\n",_runs);
   bool changeRuns=true;
   if (end==token) changeRuns=false;
   while (*end!='\0') {
@@ -505,26 +476,21 @@ int parse(char _cmd[]) {
   };
   if (_runs<=0) changeRuns=false;
   if (changeRuns) { runs=(int)_runs;};
- //printf("runs: %d\n",runs);
 //2 Remove Leading Int
   if (changeRuns) {
     token=strtokat(cmd,"/",1);
     if (token!=NULL) cmd=token;
   };
- //printf("new cmd: %s\n",cmd);
 //3. Get Command Code
   token=strtokat(cmd,":",0);
   if (!token) {free(token);free(cmd);return 0;};
- //printf("cmd token: %s\n",token);
   for (int i=0; i<COMMANDSCOUNT; i++) { if (strcmp(token,commands[i])==0) { code=i+1;};};
   if (code<1) {
     printf("ERROR: unrecognized command.\n");
     free(token);free(cmd);return 0;
   };
- //printf("code: %d\n",code);
 //4. Get Parameters
   int paramCount = commandParamCounts[code-1];
- //printf("paramCount: %d\n",paramCount);
   char parameters[MAXPARAML][MAXPARAMS];
   if (segments-1!=paramCount) {
     printf("ERROR: incorrect parameter count\n");
@@ -541,7 +507,6 @@ int parse(char _cmd[]) {
 int parseL(char line[MAXINPUT]) {
   int _code, code=0, spaces=0;
   for (int i=0; i<strlen(line); i++) if (line[i]==' ') spaces++;
- //printf("spaces: %d\n",spaces);
   char *cmdPtr;
   if (spaces==0) {
     cmdPtr = strdup(line);
@@ -569,14 +534,6 @@ int main() {
     printf("> ");
     scanf(" %[^\n]",input);
     int code = parseL(input);
-//printf("code: %d\n",code);
-    if (code==1) running=false;
+    if (code==1) return 0;
   };
-  /*char text[] = "56.54";
- printf("moat a\n");
-  float f = strtof(text,NULL);
- printf("moat b\n");
-  if (f==f) printf("f: %f\n",f);
- printf("moat c\n");*/
-  return 0;
 };
