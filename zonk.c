@@ -197,7 +197,6 @@ void drawLine(char* ARRAY, Pt2 a, Pt2 b, char fill) {
   bool sortX = b[0] > a[0], sortY = b[1] > a[1];
   bool vert = a[0] == b[0], horz = a[1] == b[1];
   bool shallow = ( fabs(((double)b[1] - a[1])/(b[0] - a[0])) <= 1.0 || horz ) && !vert;
-  /*if ( !((sortX & sortY) || (sortX & (shallow || horz)) || (sortY & (!shallow || vert))) ) { };*/
   if ( !(sortX & sortY) & !(sortX & (shallow||horz)) & !(sortY & (!shallow||vert)) ) { Pt2 temp={b[0],b[1]};b=a;a=temp;};
   if (shallow) {
     for (int xi=a[0]; xi<=b[0]; xi++) {
@@ -240,23 +239,17 @@ void printTml() {
 };
 
 void emptyTmlScnSpc() {
-  /*for(int m=0; m<yDim*xDim; m++) {
+  for(int m=0; m<yDim*xDim; m++) {
     tmlScnSpcA[m]=' ';
     tmlScnSpcB[m]=' ';
-  };*/
-  for (int yi=0; yi<yDim; yi++) {
-    for (int xi=0; xi<xDim; xi++) {
-      tmlScnSpcA[yi*xDim+xi]=' ';
-      tmlScnSpcB[yi*xDim+xi]=' ';
-    };
   };
 };
 
-char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTVUWXYZ1234567890-. ";
+char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-. ";
 
 void UItxt(Pt2 corner, char txt[], int size, int spacing) {
   FILE *font;
-  char buffer[200];
+  char buffer[300];
   char *end;
   for (int cursor=0; cursor<strlen(txt); cursor++) {
 
@@ -302,9 +295,10 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
-  Pt2 _corner = {10,10};
-  char _text[] = "hello zinc world...";
-  UItxt(_corner,_text,5,1);
+  UItxt((Pt2){4,2},"Only the quickest and brownest fox. of which there was 1. jumped over the -27 lazy hound dogs.",1,1);
+  UItxt((Pt2){4,4},"4 score and 7 years ago... - abe lincoln",3,1);
+  UItxt((Pt2){4,8},"12th night - by shakespear",5,1);
+  UItxt((Pt2){4,14},"i met a traveller in an antique land.",7,2);
 };
 
 /*-----------------> SCENE <-----------------*/
