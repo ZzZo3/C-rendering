@@ -21,7 +21,7 @@
 #define MAXINPUT 64
 #define triL 9
 #define camHeight 5
-#define COMMANDSCOUNT 12
+#define COMMANDSCOUNT 13
 #define MAXPARAML 16
 #define MAXPARAMS 16
 
@@ -112,6 +112,7 @@ double yaw = 0, pitch = 0; // Radians
 double radius = 100; // render distance
 double pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
 double xScale = 0.065, yScale = 0.10; // [0..1] coef for dimensions of screenspace
+bool changedUI = true; // whether or not the UI has been changed since last render(), so as to avoid calling UItxt extraneously
 
 int scnDims[2] = {xDim,yDim};
 
@@ -127,9 +128,17 @@ Pt3 TRINORM[triL];
 
 /*-----------------> FILE HANDLING <-----------------*/
 
-void saveData() {
+void saveData(char fileName[]) {
   FILE* file;
-  file = fopen("./data.txt","w");
+  char *fPath = "./saveData/";
+  if (strcmp(fileName," ")==0) {
+    strcat(fPath,"data.txt");
+  } else {
+    fileName[strcspn(fileName,"\n\r\0. /\\()[]{}<>:;\"\'`~!@#$%^&*")] = 0;
+    strcat(fPath,fileName);
+    strcat(fPath,".txt");
+  };
+  file = fopen(fPath,"w");
   if (file==NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
   fprintf(file,"POS:%f:%f:%f\n",POS[0],POS[1],POS[2]);
   fprintf(file,"YAW/PITCH:%f:%f\n",yaw,pitch);
@@ -137,9 +146,17 @@ void saveData() {
   printf("data saved.\n");
 };
 
-int loadData() {
+int loadData(char fileName[]) {
   FILE *file;
-  file = fopen("./data.txt","r");
+  char *fPath = "./saveData/";
+  if (strcmp(fileName," ")==0) {
+    strcat(fPath,"data.txt");
+  } else {
+    fileName[strcspn(fileName,"\n\r\0. /\\()[]{}<>:;\"\'`~!@#$%^&*")] = 0;
+    strcat(fPath,fileName);
+    strcat(fPath,".txt");
+  };
+  file = fopen(fPath,"r");
   char buffer[256];
   char *token;
   char *id;
@@ -150,7 +167,6 @@ int loadData() {
     id = strtokat(buffer,":",0);
     printf("id: %s\n",id);
     if (strcmp(id,"POS")==0) {
-
       printf("->POS");
       for (int i=0; dataSuccess&i<3; i++) {
         token=strtokat(buffer,":",i+1);
@@ -164,7 +180,6 @@ int loadData() {
         printf(":%f",_f);
       };
       printf("\n");
-
     } else if (strcmp(id,"YAW/PITCH")==0) {
       printf("->YAW/PITCH");
       token=strtokat(buffer,":",1);
@@ -241,35 +256,28 @@ void printTml() {
 void emptyTmlScnSpc() {
   for(int m=0; m<yDim*xDim; m++) {
     tmlScnSpcA[m]=' ';
-    tmlScnSpcB[m]=' ';
+    if (changedUI) tmlScnSpcB[m]=' ';
   };
 };
 
-char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-. ";
+char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 -,.!?\"\':";
 
 void UItxt(Pt2 corner, char txt[], int size, int spacing) {
   FILE *font;
-  char buffer[300];
+  char buffer[512];
   char *end;
   for (int cursor=0; cursor<strlen(txt); cursor++) {
-
     font = fopen("./font.txt","r");
     int fontLinesCount=0;
     char c;
-    for (c=fgetc(font);c!=EOF;c=fgetc(font)) {
-      if (c=='\n') fontLinesCount++;
-    };
+    for (c=fgetc(font);c!=EOF;c=fgetc(font)) if (c=='\n') fontLinesCount++;
     fclose(font);
-
     font = fopen("./font.txt","r");
     int fileLine=0;
     while (fileLine<=fontLinesCount & (int)strtof(buffer,&end)!=size) {fgets(buffer,sizeof(buffer),font);fileLine++;};
     if (fileLine==fontLinesCount) {printf("ERROR: UItxt [size] not found."); return;};
-
     int _l=0;
     for (int _guard=0; _l<sizeof(fontCharArr)/sizeof(char) & toupper(txt[cursor])!=fontCharArr[_l]; _guard++) _l++;
-   printf("_l: %d | toupper(txt[cursor]): %c | fontCharArr[_l]: %c\n",_l,toupper(txt[cursor]),fontCharArr[_l]);
-
     for (int yi=0; yi<size; yi++) {
       fgets(buffer,sizeof(buffer),font);
       int y = corner[1]+yi;
@@ -278,12 +286,7 @@ void UItxt(Pt2 corner, char txt[], int size, int spacing) {
         tmlScnSpcB[y*xDim+x] = buffer[_l*size+xi];
       };
     };
-
     fclose(font);
-
-    /*Pt2 tmlA = {corner[0]+(size*cursor),corner[1]};
-    Pt2 tmlB = {corner[0]+(size*(cursor+1))-1,corner[1]+size-1};
-    drawLine(tmlScnSpcB,a,b,'X');*/
   };
   return;
 };
@@ -295,10 +298,14 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
-  UItxt((Pt2){4,2},"Only the quickest and brownest fox. of which there was 1. jumped over the -27 lazy hound dogs.",1,1);
-  UItxt((Pt2){4,4},"4 score and 7 years ago... - abe lincoln",3,1);
-  UItxt((Pt2){4,8},"12th night - by shakespear",5,1);
-  UItxt((Pt2){4,14},"i met a traveller in an antique land.",7,2);
+  //UItxt((Pt2){4,2},"Only the quickest and brownest fox. of which there was 1. jumped over the -27 lazy hound dogs.",1,1);
+  //UItxt((Pt2){4,4},"4 score and 7 years ago... - abe lincoln",3,1);
+  //UItxt((Pt2){4,8},"12th night - by shakespear",5,1);
+  //UItxt((Pt2){4,14},"i met a traveller in an antique land.",7,2);
+  UItxt((Pt2){4,1},fontCharArr,1,1);
+  UItxt((Pt2){4,4},fontCharArr,3,1);
+  UItxt((Pt2){4,8},fontCharArr,5,1);
+  UItxt((Pt2){4,14},fontCharArr,7,1);
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -446,7 +453,7 @@ void render() {
   pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
   yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
   castNet();
-  buildUI();
+  if (changedUI) {buildUI();changedUI=false;};
   printTml();
   return;
 };
@@ -475,10 +482,46 @@ void walkRight(double by) {
   return;
 };
 
+int parseL(char line[MAXINPUT]);
+
+void autoCmdFunc(char name[]) {
+  printf("automating...\n");
+  if (strcmp(name," ")==0) {
+    printf("ERROR: auto empty.\n");
+    return;
+  };
+  FILE *autoFile;
+  char *token;
+  autoFile = fopen("./auto.txt","r");
+  int autosCount=0;
+  char c;
+  for (c=fgetc(autoFile);c!=EOF;c=fgetc(autoFile)) if (c=='\n') autosCount++;
+  fclose(autoFile);
+  bool foundAuto=false;
+  char buffer[MAXINPUT];
+  autoFile = fopen("./auto.txt","r");
+  for (int i=0; !foundAuto&(i<autosCount); i++) {
+    fgets(buffer, sizeof(buffer), autoFile);
+    token = strtokat(buffer,"~~~",0);
+    if (strcmp(name,token)==0) foundAuto=true;
+  };
+  fclose(autoFile);
+  if (!foundAuto) {
+    printf("ERROR: could not find auto.\n");
+    free(token);
+    return;
+  };
+  token = strtokat(buffer,"~~~",1);
+  token[strcspn(token, "\r\n")] = 0; /* Tim Čas : https://stackoverflow.com/a/28462221 : 2026-10-26, License - CC BY-SA 3.0*/
+  parseL(token);
+  free(token);
+  return;
+};
+
 /*-----------------> COMMAND PARSING <-----------------*/
 
-char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test"};
-int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,0,0,2};
+char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test","auto"};
+int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1};
 
 int run(int code, char parameters[][16]) {
 //printf("running: %d\n",code);
@@ -491,9 +534,10 @@ int run(int code, char parameters[][16]) {
   if (code==7) {walkForward(-2.5);} else
   if (code==8) {walkRight(-2.5);} else
   if (code==9) {walkRight(2.5);} else
-  if (code==10) {saveData();} else
-  if (code==11) {if (loadData()==0) render();} else
-  if (code==12) {printf("test->{%s,%s}\n",parameters[0],parameters[1]);};
+  if (code==10) {saveData(parameters[0]);} else
+  if (code==11) {if (loadData(parameters[0])==0) render();} else
+  if (code==12) {printf("test->{%s,%s}\n",parameters[0],parameters[1]);} else
+  if (code==13) {autoCmdFunc(parameters[0]);};
   return code;
 };
 
@@ -543,7 +587,8 @@ int parse(char _cmd[]) {
   };
   for (int i=1; i<segments; i++) {
     token=strtokat(cmd,":",i);
-    strcpy(parameters[i-1],token);
+    if (token!=NULL) strcpy(parameters[i-1],token);
+    else strcpy(parameters[i-1]," ");
   };
   for (int i=0; i<runs; i++) code=run(code,parameters);
   free(token);free(cmd);return code;
