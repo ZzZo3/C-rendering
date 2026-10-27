@@ -263,6 +263,10 @@ void emptyTmlScnSpc() {
 char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 -,.!?\"\':";
 
 void UItxt(Pt2 corner, char txt[], int size, int spacing) {
+  if (corner[0]<0||corner[1]<0||corner[0]>xDim||corner[0]>yDim) {
+    printf("ERROR: UItxt corner out of bounds.");
+    return;
+  };
   FILE *font;
   char buffer[512];
   char *end;
@@ -281,8 +285,18 @@ void UItxt(Pt2 corner, char txt[], int size, int spacing) {
     for (int yi=0; yi<size; yi++) {
       fgets(buffer,sizeof(buffer),font);
       int y = corner[1]+yi;
+      if (y>yDim-1) {
+        fclose(font);
+        printf("ERROR: UItxt escaped along y.");
+        return;
+      };
       for (int xi=0; xi<size; xi++) {
         int x = corner[0]+((size+spacing)*cursor)+xi;
+        if (x>xDim-1) {
+          fclose(font);
+          printf("ERROR: UItxt escaped along x.");
+          return;
+        };
         tmlScnSpcB[y*xDim+x] = buffer[_l*size+xi];
       };
     };
@@ -298,9 +312,17 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
-  UItxt((Pt2){4,6},"the year: 2000. the news: nothing.",5,1);
-  UItxt((Pt2){4,12},"unimportant: lord returns.",7,2);
-  UItxt((Pt2){10,20},"scotus says: \"huh?\"",5,1);
+  UItxt((Pt2){4,2},"\"we are led to wonder if a time will ever arrive the gallows shall be placed as a curiosity",3,1);
+  UItxt((Pt2){4,6},"in museums, and sight-seers shall flock to gaze upon it and",5,1);
+  UItxt((Pt2){4,12},"marvel how a people who gave evidence of",7,2);
+  UItxt((Pt2){4,20},"so much civilization and refinement as",7,2);
+  UItxt((Pt2){4,28},"did their fore-fathers could have employed such a device for",5,1);
+  UItxt((Pt2){4,34},"the amelioration of the moral condition of mankind. will posterity shudder at a model of the",3,1);
+  UItxt((Pt2){4,38},"gallows set up in complete working order on a shelf, as we of",5,1);
+  UItxt((Pt2){4,44},"to-day shudder when we examine the",7,2);
+  UItxt((Pt2){4,52},"ancient instruments of torture collected",7,2);
+  UItxt((Pt2){4,60},"in the Old-World museums? WIll the American of the year of",5,1);
+  UItxt((Pt2){4,66},"our Lord, 2000, be so far in advance of us? We venture to hope so.\"",3,1);
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -482,7 +504,6 @@ char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","lo
 int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1};
 
 int run(int code, char parameters[][16]) {
-//printf("running: %d\n",code);
   if (code==1) {printf("exiting.\n");} else
   if (code==2) {pitchUp(-3.1415/32);render();} else
   if (code==3) {pitchUp(3.1415/32);render();} else
