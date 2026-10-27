@@ -37,10 +37,10 @@ typedef double ObjShade[2];
 2|AxisGradiant|Axis: 1:x -1:-x 2:y -2:-y 3:z -3:-z
 */
 
-struct Tri3 {
+struct Triangle3 {
   Pt3 a,b,c;
   ObjShade shade;
-};
+} typedef Tri3;
 
 int pol(double v) {
   if (v>0) return 1;
@@ -123,7 +123,7 @@ Mtrx33 xzSwpMtrx = {0,0,1,0,1,0,1,0,0};
 Mtrx33 pitchMtrx = {1,0,0,0,1,0,0,0,1};
 Mtrx33 yawMtrx = {1,0,0,0,1,0,0,0,1};
 
-struct Tri3 TRI[triL];
+Tri3 TRI[triL];
 Pt3 TRINORM[triL];
 
 /*-----------------> FILE HANDLING <-----------------*/
@@ -298,14 +298,9 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
-  //UItxt((Pt2){4,2},"Only the quickest and brownest fox. of which there was 1. jumped over the -27 lazy hound dogs.",1,1);
-  //UItxt((Pt2){4,4},"4 score and 7 years ago... - abe lincoln",3,1);
-  //UItxt((Pt2){4,8},"12th night - by shakespear",5,1);
-  //UItxt((Pt2){4,14},"i met a traveller in an antique land.",7,2);
-  UItxt((Pt2){4,1},fontCharArr,1,1);
-  UItxt((Pt2){4,4},fontCharArr,3,1);
-  UItxt((Pt2){4,8},fontCharArr,5,1);
-  UItxt((Pt2){4,14},fontCharArr,7,1);
+  UItxt((Pt2){4,6},"the year: 2000. the news: nothing.",5,1);
+  UItxt((Pt2){4,12},"unimportant: lord returns.",7,2);
+  UItxt((Pt2){10,20},"scotus says: \"huh?\"",5,1);
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -367,9 +362,9 @@ void  castNet(){
 //0. Generate Pt3 for pixel
     Pt3 p3Dummy = {xScale*(xi-floor(xDim/2)), yScale*(yi-floor(yDim/2)), pseuFOV};
 //1. Apply Screenspace Transform
-    for (int i=0; i<2; i++) { if (p3Dummy[i]!=0) {
+    for (int i=0; i<2; i++) if (p3Dummy[i]!=0) {
       p3Dummy[i] += (2*pow(p3Dummy[i],3))/(fabs(p3Dummy[i])*scnDims[i]); p3Dummy[i]/=3;
-    };};
+    };
     p3Dummy[1] *= -1;
 //2. Get Slopes (X-Swaps?)
     double tempF, dydx, dzdx;
@@ -402,74 +397,28 @@ void  castNet(){
 /*-----------------> CONTENT <-----------------*/
 
 void buildScene() {
-  struct Tri3 FloorA = {{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}};
-  struct Tri3 FloorB = {{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}};
-  struct Tri3 HouseA = {{-20,0,25},{-10,10,25},{-10,0,25},{0,1}};
-  struct Tri3 HouseB = {{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}};
-  struct Tri3 HouseC = {{-10,0,25},{-10,10,70},{-10,0,70},{0,1}};
-  struct Tri3 HouseD = {{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
-  struct Tri3 RoofA = {{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
-  struct Tri3 RoofB = {{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
-  struct Tri3 RoofC = {{-15,15,25},{-7,7,70},{-15,15,70},{0,0.5}};
-  struct Tri3 TestA = {{-10,0,25},{0,10,25},{0,0,25},{1,1}};
-  struct Tri3 TestB = {{-10,0,25},{0,10,25},{-10,10,25},{1,1}};
-  TRI[0] = FloorA;
-  TRI[1] = FloorB;
-  TRI[2] = HouseA;
-  TRI[3] = HouseB;
-  TRI[4] = HouseC;
-  TRI[5] = HouseD;
-  TRI[6] = RoofA;
-  TRI[7] = RoofB;
-  TRI[8] = RoofC;
-};
-
-/*-----------------> UTIL 2 <-----------------*/
-
-void startup() {
-  tmlScnSpcA=(char*)malloc(xDim*yDim);
-  tmlScnSpcB=(char*)malloc(xDim*yDim);
-  buildScene();
-  Pt3 a,b,c,p,q,n;
-  for (int i=0; i<triL; i++) {
-    for (int j=0; j<3; j++) {
-      a[j] = TRI[i].a[j]-CAM[j];
-      b[j] = TRI[i].b[j]-CAM[j];
-      c[j] = TRI[i].c[j]-CAM[j];
-    };
-    for (int j=0; j<3; j++) {
-      p[j] = b[j]-a[j];
-      q[j] = c[j]-a[j];
-    };
-    cross(p,q,n);
-    for (int j=0; j<3; j++) { TRINORM[i][j]=n[j];};
-    TRINORM[i][3] = dot(n,a);
-  };
-  return;
-};
-
-void render() {
-  emptyTmlScnSpc();
-  pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
-  yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
-  castNet();
-  if (changedUI) {buildUI();changedUI=false;};
-  printTml();
-  return;
+  TRI[0] = (Tri3){{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}};
+  TRI[1] = (Tri3){{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}};
+  TRI[2] = (Tri3){{-20,0,25},{-10,10,25},{-10,0,25},{0,1}};
+  TRI[3] = (Tri3){{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}};
+  TRI[4] = (Tri3){{-10,0,25},{-10,10,70},{-10,0,70},{0,1}};
+  TRI[5] = (Tri3){{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
+  TRI[6] = (Tri3){{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
+  TRI[7] = (Tri3){{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
+  TRI[8] = (Tri3){{-10,0,25},{0,10,25},{-10,10,25},{1,1}};
 };
 
 /*-----------------> COMMAND FUNCTIONS <-----------------*/
 
-void pitchUp(double by) { pitch+=by;render();return;};
+void pitchUp(double by) { pitch+=by;return;};
 
-void yawLeft(double by) { yaw+=by;render();return;};
+void yawLeft(double by) { yaw+=by;return;};
 
 void walkForward(double by) {
   Pt3 unitZ = {0,0,by};
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
-  render();
   return;
 };
 
@@ -478,7 +427,6 @@ void walkRight(double by) {
   applyMtrxPt3(unitZ,yawMtrx);
   POS[0]+=unitZ[0];POS[2]+=unitZ[2];
   CAM[0]+=unitZ[0];CAM[2]+=unitZ[2];
-  render();
   return;
 };
 
@@ -518,7 +466,17 @@ void autoCmdFunc(char name[]) {
   return;
 };
 
-/*-----------------> COMMAND PARSING <-----------------*/
+/*-----------------> COMMANDS / RENDER LOOP <-----------------*/
+
+void render() {
+  emptyTmlScnSpc();
+  pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
+  yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
+  castNet();
+  if (changedUI) {buildUI();changedUI=false;};
+  printTml();
+  return;
+};
 
 char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test","auto"};
 int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1};
@@ -526,14 +484,14 @@ int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1};
 int run(int code, char parameters[][16]) {
 //printf("running: %d\n",code);
   if (code==1) {printf("exiting.\n");} else
-  if (code==2) {pitchUp(-3.1415/32);} else
-  if (code==3) {pitchUp(3.1415/32);} else
-  if (code==4) {yawLeft(3.1415/32);} else
-  if (code==5) {yawLeft(-3.1415/32);} else
-  if (code==6) {walkForward(2.5);} else
-  if (code==7) {walkForward(-2.5);} else
-  if (code==8) {walkRight(-2.5);} else
-  if (code==9) {walkRight(2.5);} else
+  if (code==2) {pitchUp(-3.1415/32);render();} else
+  if (code==3) {pitchUp(3.1415/32);render();} else
+  if (code==4) {yawLeft(3.1415/32);render();} else
+  if (code==5) {yawLeft(-3.1415/32);render();} else
+  if (code==6) {walkForward(2.5);render();} else
+  if (code==7) {walkForward(-2.5);render();} else
+  if (code==8) {walkRight(-2.5);render();} else
+  if (code==9) {walkRight(2.5);render();} else
   if (code==10) {saveData(parameters[0]);} else
   if (code==11) {if (loadData(parameters[0])==0) render();} else
   if (code==12) {printf("test->{%s,%s}\n",parameters[0],parameters[1]);} else
@@ -611,6 +569,30 @@ int parseL(char line[MAXINPUT]) {
   };
   free(cmdPtr);
   return code;
+};
+
+/*-----------------> BAKING <-----------------*/
+
+void startup() {
+  tmlScnSpcA=(char*)malloc(xDim*yDim);
+  tmlScnSpcB=(char*)malloc(xDim*yDim);
+  buildScene();
+  Pt3 a,b,c,p,q,n;
+  for (int i=0; i<triL; i++) {
+    for (int j=0; j<3; j++) {
+      a[j] = TRI[i].a[j]-CAM[j];
+      b[j] = TRI[i].b[j]-CAM[j];
+      c[j] = TRI[i].c[j]-CAM[j];
+    };
+    for (int j=0; j<3; j++) {
+      p[j] = b[j]-a[j];
+      q[j] = c[j]-a[j];
+    };
+    cross(p,q,n);
+    for (int j=0; j<3; j++) { TRINORM[i][j]=n[j];};
+    TRINORM[i][3] = dot(n,a);
+  };
+  return;
 };
 
 /*-----------------> MAIN <-----------------*/
