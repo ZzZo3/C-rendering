@@ -3,15 +3,8 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-
-/*-----------------> NOTICE <-----------------*/
 /*
-  A MATRIX SHALL BE DEFINED AND REFERENCED WITH "M[column][row]". -> double M[3][3] = {{1,4,7},{2,5,8},{3,6,9}};
-  A POINT 2 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 2 COLUMNS.  -> double P2[1][2] = {{x,y}};
-  A POINT 3 SHALL BE DEFINED AS A MATRIX OF 1 ROW AND 3 COLUMNS.  -> double P3[1][3] = {{x,y,z}};
-      |1 2 3|        |x|        |x|
-  M = |4 5 6| ; P2 = |y| ; P3 = |y|
-      |7 8 9|                   |z|
+
 */
 /*-----------------> CONSTANTS <-----------------*/
 
@@ -130,7 +123,7 @@ Pt3 TRINORM[triL];
 
 void saveData(char fileName[]) {
   FILE* file;
-  char *fPath = "./saveData/";
+  char fPath[64] = "./saveData/";
   if (strcmp(fileName," ")==0) {
     strcat(fPath,"data.txt");
   } else {
@@ -138,6 +131,8 @@ void saveData(char fileName[]) {
     strcat(fPath,fileName);
     strcat(fPath,".txt");
   };
+  printf("\"%s\"\n",fPath);
+
   file = fopen(fPath,"w");
   if (file==NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
   fprintf(file,"POS:%f:%f:%f\n",POS[0],POS[1],POS[2]);
@@ -148,7 +143,7 @@ void saveData(char fileName[]) {
 
 int loadData(char fileName[]) {
   FILE *file;
-  char *fPath = "./saveData/";
+  char fPath[64] = "./saveData/";
   if (strcmp(fileName," ")==0) {
     strcat(fPath,"data.txt");
   } else {
@@ -260,13 +255,12 @@ void emptyTmlScnSpc() {
   };
 };
 
-char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 -,.!?\"\':";
+char fontCharArr[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 -,.!?\"\':;<>()[]{}";
 
-void UItxt(Pt2 corner, char txt[], int size, int spacing) {
-  if (corner[0]<0||corner[1]<0||corner[0]>xDim||corner[0]>yDim) {
-    printf("ERROR: UItxt corner out of bounds.");
-    return;
-  };
+void UItxt(Pt2 cornerA, Pt2 cornerB, char txt[], int size, Pt2 spacing) {
+  if (cornerA[0]<0||cornerA[1]<0||cornerA[0]>xDim||cornerA[1]>yDim) { printf("ERROR: UItxt cornerA out of bounds.\n"); return;};
+  if (cornerB[0]<0||cornerB[1]<0||cornerB[0]>xDim||cornerB[1]>yDim) { printf("ERROR: UItxt cornerB out of bounds.\n"); return;};
+  if (cornerA[0]>=cornerB[0]||cornerA[1]>=cornerB[1]) { printf("ERROR: UItxt corners sorting error.\n"); return;};
   FILE *font;
   char buffer[512];
   char *end;
@@ -279,27 +273,30 @@ void UItxt(Pt2 corner, char txt[], int size, int spacing) {
     font = fopen("./font.txt","r");
     int fileLine=0;
     while (fileLine<=fontLinesCount & (int)strtof(buffer,&end)!=size) {fgets(buffer,sizeof(buffer),font);fileLine++;};
-    if (fileLine==fontLinesCount) {printf("ERROR: UItxt [size] not found."); return;};
+    if (fileLine==fontLinesCount) {printf("ERROR: UItxt [size] not found.\n"); return;};
     int _l=0;
-    for (int _guard=0; _l<sizeof(fontCharArr)/sizeof(char) & toupper(txt[cursor])!=fontCharArr[_l]; _guard++) _l++;
+    for (int _guard=0; _l<strlen(fontCharArr) & toupper(txt[cursor])!=fontCharArr[_l]; _guard++) _l++;
+
+    /*for (int c=0; c<strlen(txt); c++) { // iterate through txt
+                                        // find cursor in tmlScnSpcB
+      for (int fi=0; fi<size; fi++) { // find cursor in font file
+        fgets(buffer,sizeof(buffer),font);
+        int fontFileCursor = _l*size+fi;
+      };
+
+    };*/
+
     for (int yi=0; yi<size; yi++) {
       fgets(buffer,sizeof(buffer),font);
-      int y = corner[1]+yi;
-      if (y>yDim-1) {
-        fclose(font);
-        printf("ERROR: UItxt escaped along y.");
-        return;
-      };
+      int y = cornerA[1]+yi;
+      if (y>cornerB[1]) { fclose(font); printf("ERROR: UItxt escaped along y.\n"); return; };
       for (int xi=0; xi<size; xi++) {
-        int x = corner[0]+((size+spacing)*cursor)+xi;
-        if (x>xDim-1) {
-          fclose(font);
-          printf("ERROR: UItxt escaped along x.");
-          return;
-        };
+        int x = cornerA[0]+((size+spacing[0])*cursor)+xi;
+        if (x>cornerB[0]) { fclose(font); printf("ERROR: UItxt escaped along x.\n"); return;};
         tmlScnSpcB[y*xDim+x] = buffer[_l*size+xi];
       };
     };
+
     fclose(font);
   };
   return;
@@ -312,17 +309,19 @@ void buildUI() {
   drawPoint(tmlScnSpcB, pUIa,'\\');drawPoint(tmlScnSpcB, pUIb,'|');drawPoint(tmlScnSpcB, pUIc,'/');
   drawPoint(tmlScnSpcB, pUId,'-');drawPoint(tmlScnSpcB, pUIe,'-');
   drawPoint(tmlScnSpcB, pUIf,'/');drawPoint(tmlScnSpcB, pUIg,'|');drawPoint(tmlScnSpcB, pUIh,'\\');
-  UItxt((Pt2){4,2},"\"we are led to wonder if a time will ever arrive the gallows shall be placed as a curiosity",3,1);
-  UItxt((Pt2){4,6},"in museums, and sight-seers shall flock to gaze upon it and",5,1);
-  UItxt((Pt2){4,12},"marvel how a people who gave evidence of",7,2);
-  UItxt((Pt2){4,20},"so much civilization and refinement as",7,2);
-  UItxt((Pt2){4,28},"did their fore-fathers could have employed such a device for",5,1);
-  UItxt((Pt2){4,34},"the amelioration of the moral condition of mankind. will posterity shudder at a model of the",3,1);
-  UItxt((Pt2){4,38},"gallows set up in complete working order on a shelf, as we of",5,1);
-  UItxt((Pt2){4,44},"to-day shudder when we examine the",7,2);
-  UItxt((Pt2){4,52},"ancient instruments of torture collected",7,2);
-  UItxt((Pt2){4,60},"in the Old-World museums? WIll the American of the year of",5,1);
-  UItxt((Pt2){4,66},"our Lord, 2000, be so far in advance of us? We venture to hope so.\"",3,1);
+  /*UItxt((Pt2){4,2},(Pt2){xDim-3,yDim-3},"\"We are led to wonder if a time will ever arrive when the gallows shall be placed as a",3,(Pt2){1,1});
+  UItxt((Pt2){4,6},(Pt2){xDim-3,yDim-3},"curiosity in museums, and sight-seers shall flock to gaze",5,(Pt2){1,1});
+  UItxt((Pt2){4,12},(Pt2){xDim-3,yDim-3},"upon it and marvel how a people who gave",7,(Pt2){2,1});
+  UItxt((Pt2){4,20},(Pt2){xDim-3,yDim-3},"evidence of so much civilization and",7,(Pt2){2,1});
+  UItxt((Pt2){4,28},(Pt2){xDim-3,yDim-3},"refinement as did their fore-fathers could have employed such",5,(Pt2){1,1});
+  UItxt((Pt2){4,34},(Pt2){xDim-3,yDim-3},"a device for the amelioration of the moral condition of mankind. will posterity shudder at",3,(Pt2){1,1});
+  UItxt((Pt2){4,38},(Pt2){xDim-3,yDim-3},"a model of thegallows set up in complete working order on a",5,(Pt2){1,1});
+  UItxt((Pt2){4,44},(Pt2){xDim-3,yDim-3},"shelf, as we of to-day shudder when we",7,(Pt2){2,1});
+  UItxt((Pt2){4,52},(Pt2){xDim-3,yDim-3},"examine the ancient instruments of",7,(Pt2){2,1});
+  UItxt((Pt2){4,60},(Pt2){xDim-3,yDim-3},"torture collected in the Old-World museums? WIll the",5,(Pt2){1,1});
+  UItxt((Pt2){4,66},(Pt2){xDim-3,yDim-3},"American of the year of our Lord, 2000, be so far in advance of us? We venture to hope so.\"",3,(Pt2){1,1});
+  UItxt((Pt2){4,70},(Pt2){xDim-3,yDim-3},"- Report of the Gerry Commission",5,(Pt2){1,1});*/
+  UItxt((Pt2){4,2},(Pt2){xDim-1,yDim-1},"printf(\">hello zinc world...\");",3,(Pt2){1,1});
 };
 
 /*-----------------> SCENE <-----------------*/
@@ -427,7 +426,7 @@ void buildScene() {
   TRI[5] = (Tri3){{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}};
   TRI[6] = (Tri3){{-20,10,25},{-10,10,25},{-15,15,25},{0,1}};
   TRI[7] = (Tri3){{-15,15,25},{-7,7,70},{-7,7,25},{0,1}};
-  TRI[8] = (Tri3){{-10,0,25},{0,10,25},{-10,10,25},{1,1}};
+  TRI[8] = (Tri3){{-15,15,25},{-7,7,70},{-15,15,70},{1,1}};
 };
 
 /*-----------------> COMMAND FUNCTIONS <-----------------*/
