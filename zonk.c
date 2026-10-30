@@ -350,8 +350,10 @@ void castRay(Pt3 RAY, Pt2 px) {
     double inOutTheta = acos(dotNorm(a,b))+acos(dotNorm(a,c))+acos(dotNorm(b,c));
     if (inOutTheta>=2*M_PI&t>=0) {
       foundTRI=true;
-      for (int j=0; j<2; j++) { shade[j]=TRI[i].shade[j];};
-      if (distA(T)<distA(Tfnl)) for(int j=0; j<3; j++) Tfnl[j]=T[j];
+      if (distA(T)<distA(Tfnl)) for(int j=0; j<3; j++) {
+        Tfnl[j]=T[j];
+        for (int j=0; j<2; j++) shade[j]=TRI[i].shade[j];
+      };
     }
   };
   if (foundTRI) {
