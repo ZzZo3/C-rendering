@@ -5,6 +5,14 @@
 #include <ctype.h>
 /*
 
+@@@@@@@    @@@    @     @    @@@@              @@@@
+     @    @   @   @@    @   @    @            @    @
+    @    @     @  @ @   @  @                 @
+ @@@@@   @     @  @  @  @  @                 @
+  @      @     @  @   @ @  @                 @
+ @        @   @   @    @@   @    @    @@@     @    @
+@@@@@@@    @@@    @     @    @@@@     @@@      @@@@
+
 */
 /*-----------------> CONSTANTS <-----------------*/
 
@@ -12,9 +20,9 @@
 #define xDim /*211*/ 373
 #define gradL 14
 #define MAXINPUT 64
-#define triL 9
+#define TRIANGLECOUNT 32
 #define camHeight 5
-#define COMMANDSCOUNT 13
+#define COMMANDSCOUNT 14
 #define MAXPARAML 16
 #define MAXPARAMS 16
 
@@ -101,8 +109,8 @@ char* tmlScnSpcA; // screenspace
 char* tmlScnSpcB; // UI layer
 Pt3 CAM = {0,camHeight,0};
 Pt3 POS = {0,0,0};
-double yaw = 0, pitch = 0; // Radians
-double radius = 100; // render distance
+double G_yaw = 0, G_pitch = 0; // Radians
+double G_radius = 100; // render distance
 double pseuFOV = 4; // inital z-val for screenspace points | as "pseuFOV" -> 0, FOV -> 180
 double xScale = 0.065, yScale = 0.10; // [0..1] coef for dimensions of screenspace
 bool changedUI = true; // whether or not the UI has been changed since last render(), so as to avoid calling UItxt extraneously
@@ -116,8 +124,8 @@ Mtrx33 xzSwpMtrx = {0,0,1,0,1,0,1,0,0};
 Mtrx33 pitchMtrx = {1,0,0,0,1,0,0,0,1};
 Mtrx33 yawMtrx = {1,0,0,0,1,0,0,0,1};
 
-Tri3 TRI[triL];
-Pt3 TRINORM[triL];
+Tri3 TRI[TRIANGLECOUNT];
+Pt3 TRINORM[TRIANGLECOUNT];
 
 /*-----------------> FILE HANDLING <-----------------*/
 
@@ -136,7 +144,7 @@ void saveData(char fileName[]) {
   file = fopen(fPath,"w");
   if (file==NULL) { printf("ERROR: \"./data.txt\" not created.\n");return;};
   fprintf(file,"POS:%f:%f:%f\n",POS[0],POS[1],POS[2]);
-  fprintf(file,"YAW/PITCH:%f:%f\n",yaw,pitch);
+  fprintf(file,"YAW/PITCH:%f:%f\n",G_yaw,G_pitch);
   fclose(file);
   printf("data saved.\n");
 };
@@ -180,12 +188,12 @@ int loadData(char fileName[]) {
       token=strtokat(buffer,":",1);
       _f=strtof(token,NULL);
       if (_f!=_f) dataSuccess=false;
-      else yaw=_f;
+      else G_yaw=_f;
       printf(":%f",_f);
       token=strtokat(buffer,":",2);
       _f=strtof(token,NULL);
       if (_f!=_f) dataSuccess=false;
-      else pitch=_f;
+      else G_pitch=_f;
       printf(":%f\n",_f);
     };
   };
@@ -330,10 +338,10 @@ void castRay(Pt3 RAY, Pt2 px) {
   bool DP = false;
   double value = 0.0;
   Pt3 a,b,c,n,p,q,T; // TRI points, normal, temps pq, v: target of RAY on Plane
-  Pt3 Tfnl = {radius,radius,radius}; // intersection of RAY and TRI plane
+  Pt3 Tfnl = {G_radius,G_radius,G_radius}; // intersection of RAY and TRI plane
   bool foundTRI = false;
   ObjShade shade;
-  for(int i=0; i<triL; i++) {
+  for(int i=0; i<TRIANGLECOUNT; i++) {
     for (int j=0; j<3; j++) {
       a[j] = TRI[i].a[j]-CAM[j];
       b[j] = TRI[i].b[j]-CAM[j];
@@ -357,21 +365,21 @@ void castRay(Pt3 RAY, Pt2 px) {
     }
   };
   if (foundTRI) {
-    value = (radius-distA(Tfnl))/radius;
+    value = (G_radius-distA(Tfnl))/G_radius;
     if (value<1.0/(gradL-1)) { value=1.0/(gradL-1);};
   } else {
     shade[0]=0.0;shade[1]=0.0;
   };
 //SHADING
  /*mono*/ if (shade[0]==0.0) { value = shade[1];} else
- /*dist*/ if (shade[0]==1.0) { value = (radius-distA(Tfnl))/radius;} else
+ /*dist*/ if (shade[0]==1.0) { value = (G_radius-distA(Tfnl))/G_radius;} else
  /*axis*/ if (shade[0]==2.0) {
-    if (shade[1]==1.0) { value=Tfnl[0]/radius;} else
-    if (shade[1]==-1.0) { value=(radius-Tfnl[0])/radius;} else
-    if (shade[1]==2.0) { value=Tfnl[1]/radius;} else
-    if (shade[1]==-2.0) { value=(radius-Tfnl[1])/radius;} else
-    if (shade[1]==3.0) { value=Tfnl[2]/radius;} else
-    if (shade[1]==-3.0) { value=(radius-Tfnl[2])/radius;} else { value=0.0;};
+    if (shade[1]==1.0) { value=Tfnl[0]/G_radius;} else
+    if (shade[1]==-1.0) { value=(G_radius-Tfnl[0])/G_radius;} else
+    if (shade[1]==2.0) { value=Tfnl[1]/G_radius;} else
+    if (shade[1]==-2.0) { value=(G_radius-Tfnl[1])/G_radius;} else
+    if (shade[1]==3.0) { value=Tfnl[2]/G_radius;} else
+    if (shade[1]==-3.0) { value=(G_radius-Tfnl[2])/G_radius;} else { value=0.0;};
   } else { value=0.0;};
   if (value>1.0) { value=1.0;} else if (value<0.0) { value=0.0;};
   int normValue = round(value*(gradL-1));
@@ -400,7 +408,7 @@ void  castNet(){
     dydx = p3Dummy[1]/p3Dummy[0];
     dzdx = p3Dummy[2]/p3Dummy[0];
 //3. Extrude Ray to Sphere
-    double xOptA = sqrt(radius*radius/(dydx*dydx+dzdx*dzdx+1));
+    double xOptA = sqrt(G_radius*G_radius/(dydx*dydx+dzdx*dzdx+1));
     double xOptB = -xOptA;
     if (pol(p3Dummy[0])==pol(xOptA)) { p3Dummy[0]=xOptA;} else { p3Dummy[0]=xOptB;};
     p3Dummy[1] = dydx*(p3Dummy[0]);
@@ -419,9 +427,70 @@ void  castNet(){
 
 /*-----------------> CONTENT <-----------------*/
 
+int loadObject(char fileName[], Pt3 origin, double yaw, double pitch, double roll) {
+/*
+  FILE *file;
+  char fPath[64] = "./objects/";
+  if (strcmp(fileName," ")==0) {
+    strcat(fPath,"cube.txt");
+  } else {
+    fileName[strcspn(fileName,"\n\r\0. /\\()[]{}<>:;\"\'`~!@#$%^&*")] = 0;
+    strcat(fPath,fileName);
+    strcat(fPath,".txt");
+  };
+  file = fopen(fPath,"r");
+  char buffer[256];
+  char *token;
+  char *id;
+  double _f;
+  bool dataSuccess = true;
+  while(fgets(buffer,sizeof(buffer),file) != NULL) {
+    printf("raw-%s",buffer);
+    id = strtokat(buffer,":",0);
+    printf("id: %s\n",id);
+    if (strcmp(id,"POS")==0) {
+      printf("->POS");
+      for (int i=0; dataSuccess&i<3; i++) {
+        token=strtokat(buffer,":",i+1);
+        _f=strtof(token,NULL);
+        if (_f!=_f) dataSuccess=false;
+        else {
+          POS[i]=_f;
+          CAM[i]=_f;
+          if (i==1) CAM[i]+=camHeight;
+        };
+        printf(":%f",_f);
+      };
+      printf("\n");
+    } else if (strcmp(id,"YAW/PITCH")==0) {
+      printf("->YAW/PITCH");
+      token=strtokat(buffer,":",1);
+      _f=strtof(token,NULL);
+      if (_f!=_f) dataSuccess=false;
+      else G_yaw=_f;
+      printf(":%f",_f);
+      token=strtokat(buffer,":",2);
+      _f=strtof(token,NULL);
+      if (_f!=_f) dataSuccess=false;
+      else G_pitch=_f;
+      printf(":%f\n",_f);
+    };
+  };
+  fclose(file);
+  free(token);free(id);
+  if (!dataSuccess) {
+    printf("data failed to load.\n");
+    return -1;
+  };
+  printf("data loaded.\n");
+*/
+  return 0;
+};
+
 void buildScene() {
-  TRI[0] = (Tri3){{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}}; // floorA
+  /*TRI[0] = (Tri3){{70,0,70},{70,0,-70},{-70,0,-70},{1,0.15}}; // floorA
   TRI[1] = (Tri3){{70,0,70},{-70,0,70},{-70,0,-70},{1,0.15}}; // floorB
+  // HOUSE A
   TRI[2] = (Tri3){{-20,0,25},{-10,10,25},{-10,0,25},{0,1}}; // frontA
   TRI[3] = (Tri3){{-20,0,25},{-10,10,25},{-20,10,25},{0,0.5}}; //frontB
   TRI[6] = (Tri3){{-20,10,25},{-10,10,25},{-15,15,25},{0,1}}; //frontRoof
@@ -429,13 +498,22 @@ void buildScene() {
   TRI[5] = (Tri3){{-10,0,25},{-10,10,70},{-10,10,25},{0,0.5}}; //rightB
   TRI[7] = (Tri3){{-15,15,25},{-7,7,70},{-7,7,25},{0,1}}; //roofRightA
   TRI[8] = (Tri3){{-15,15,25},{-7,7,70},{-15,15,70},{1,1}}; //roofRightB
+  // HOUSE B  
+  TRI[9] = (Tri3){{-20,0,70},{-10,10,70},{-10,0,70},{0,1}}; // backA
+  TRI[10] = (Tri3){{-20,0,70},{-10,10,70},{-20,10,70},{0,0.5}}; //backB
+  TRI[11] = (Tri3){{-20,10,70},{-10,10,70},{-15,15,70},{0,1}}; //backRoof
+  TRI[12] = (Tri3){{-20,0,25},{-20,10,70},{-20,0,70},{0,1}}; //rightA
+  TRI[13] = (Tri3){{-20,0,25},{-20,10,70},{-20,10,25},{0,0.5}}; //rightB
+  TRI[14] = (Tri3){{-15,15,25},{-23,7,70},{-23,7,25},{0,1}}; //roofRightA
+  TRI[15] = (Tri3){{-15,15,25},{-23,7,70},{-15,15,70},{1,1}}; //roofRightB*/
+  loadObject("cube",(Pt3){0,0,0},0,0,0);
 };
 
 /*-----------------> COMMAND FUNCTIONS <-----------------*/
 
-void pitchUp(double by) { pitch+=by;return;};
+void pitchUp(double by) { G_pitch+=by;return;};
 
-void yawLeft(double by) { yaw+=by;return;};
+void yawLeft(double by) { G_yaw+=by;return;};
 
 void walkForward(double by) {
   Pt3 unitZ = {0,0,by};
@@ -493,16 +571,16 @@ void autoCmdFunc(char name[]) {
 
 void render() {
   emptyTmlScnSpc();
-  pitchMtrx[4]=cos(pitch);pitchMtrx[5]=-sin(pitch);pitchMtrx[7]=sin(pitch);pitchMtrx[8]=cos(pitch);
-  yawMtrx[0]=cos(yaw);yawMtrx[2]=sin(yaw);yawMtrx[6]=-sin(yaw);yawMtrx[8]=cos(yaw);
+  pitchMtrx[4]=cos(G_pitch);pitchMtrx[5]=-sin(G_pitch);pitchMtrx[7]=sin(G_pitch);pitchMtrx[8]=cos(G_pitch);
+  yawMtrx[0]=cos(G_yaw);yawMtrx[2]=sin(G_yaw);yawMtrx[6]=-sin(G_yaw);yawMtrx[8]=cos(G_yaw);
   castNet();
   if (changedUI) {buildUI();changedUI=false;};
   printTml();
   return;
 };
 
-char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test","auto"};
-int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1};
+char commands[][COMMANDSCOUNT] = {"x","w","s","a","d","W","S","A","D","save","load","test","auto","help"};
+int commandParamCounts[COMMANDSCOUNT] = {0,0,0,0,0,0,0,0,0,1,1,2,1,-1};
 
 int run(int code, char parameters[][16]) {
   if (code==1) {printf("exiting.\n");} else
@@ -561,7 +639,7 @@ int parse(char _cmd[]) {
 //4. Get Parameters
   int paramCount = commandParamCounts[code-1];
   char parameters[MAXPARAML][MAXPARAMS];
-  if (segments-1!=paramCount) {
+  if (segments-1!=paramCount&&paramCount==-1) {
     printf("ERROR: incorrect parameter count\n");
     free(token);free(cmd);return 0;
   };
@@ -600,7 +678,7 @@ void startup() {
   tmlScnSpcB=(char*)malloc(xDim*yDim);
   buildScene();
   Pt3 a,b,c,p,q,n;
-  for (int i=0; i<triL; i++) {
+  for (int i=0; i<TRIANGLECOUNT; i++) {
     for (int j=0; j<3; j++) {
       a[j] = TRI[i].a[j]-CAM[j];
       b[j] = TRI[i].b[j]-CAM[j];
