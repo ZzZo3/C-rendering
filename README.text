@@ -1,0 +1,4 @@
+- This is an ascii-based 3d rendering engine, that allows for objects, camera manipulation, and movement, like one of a videogame or CAD system.
+- My purpose was to learn C—as recommended by my friend—by building it from absolute scratch. I only allow myself to research tools—not specific
+techniques for achieving some functionality.
+- It runs in a linux terminal.
